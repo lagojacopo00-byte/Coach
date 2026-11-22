@@ -7,7 +7,7 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 
 ## F1 Dominio (`src/domain/`)
 - [x] Tipi: Session, Week, Phase, Run, Profile
-- [ ] `plan.seed.ts`: 16 settimane + settimana 0 (§4), con test di coerenza (date, fasi, sett. 15 = maratona)
+- [x] `plan.seed.ts`: 16 settimane + settimana 0 (§4), con test di coerenza (date, fasi, sett. 15 = maratona)
 - [ ] `week.ts`: settimana corrente da una data, fase, countdown alla gara
 - [ ] `zones.ts`: zone FC da LTHR e ritmi easy/soglia (§5)
 - [ ] `summary.ts`: pianificato vs fatto, km settimanali, variazione % settimanale
