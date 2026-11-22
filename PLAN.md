@@ -13,13 +13,13 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] `summary.ts`: pianificato vs fatto, km settimanali, variazione % settimanale
 
 ## F2 Regole coach (`src/domain/rules.ts`)
-- [ ] R1 tetto +10% settimanale (scarichi sett. 4 e 9 esclusi)
-- [ ] R2 martedì con gambe pesanti/tibie doloranti → easy
-- [ ] R3 dolore puntiforme sull'osso → stop corsa, bici, avviso medico
-- [ ] R4 seduta saltata: nessun recupero
-- [ ] R5 ricalcolo ritmi dopo test soglia
-- [ ] R6 promemoria gel nei lunghi > 90'
-- [ ] R7 mezza 14/02 oltre 1:54 → proposta di rivedere il target
+- [x] R1 tetto +10% settimanale (scarichi sett. 4 e 9 esclusi)
+- [x] R2 martedì con gambe pesanti/tibie doloranti → easy
+- [x] R3 dolore puntiforme sull'osso → stop corsa, bici, avviso medico
+- [x] R4 seduta saltata: nessun recupero
+- [x] R5 ricalcolo ritmi dopo test soglia
+- [x] R6 promemoria gel nei lunghi > 90'
+- [x] R7 mezza 14/02 oltre 1:54 → proposta di rivedere il target
 
 ## F3 Supabase (supervisionato)
 - [ ] Migrazioni, RLS utente singolo, auth magic link, repository in `src/data/`
