@@ -72,3 +72,14 @@ describe("summary", () => {
     expect(paceOf({ km: 0, durationSec: 100 })).toBeUndefined();
   });
 });
+
+describe("seduta segnata non fatta", () => {
+  it("stato skipped, non conta come fatta", () => {
+    const w = PLAN_WEEKS[0];
+    const s = weekSummary(w, [], "2026-11-27", 420, [{ date: "2026-11-24", reason: "stanco" }]);
+    const mar = s.statuses.find((x) => x.session.weekday === "mar")!;
+    expect(mar.state).toBe("skipped");
+    expect(mar.skip?.reason).toBe("stanco");
+    expect(s.doneRuns).toBe(0);
+  });
+});

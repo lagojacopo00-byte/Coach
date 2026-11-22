@@ -1,4 +1,4 @@
-import type { IsoDate, Run, Session, SessionKind, Week } from "./types";
+import type { IsoDate, Run, Session, SessionKind, Skip, Week } from "./types";
 import { dateOfWeekday } from "./week";
 
 /** Tipi di seduta che sono corse (le altre: palestra, bici, riposo). */
@@ -62,13 +62,14 @@ export function changePct(previousKm: number, currentKm: number): number | undef
   return ((currentKm - previousKm) / previousKm) * 100;
 }
 
-export type SessionState = "done" | "missed" | "today" | "upcoming";
+export type SessionState = "done" | "skipped" | "missed" | "today" | "upcoming";
 
 export interface SessionStatus {
   session: Session;
   date: IsoDate;
   state: SessionState;
   run?: Run;
+  skip?: Skip;
 }
 
 export interface WeekSummary {
@@ -89,20 +90,23 @@ export function weekSummary(
   runs: readonly Run[],
   today: IsoDate,
   easyPace = DEFAULT_EASY_PACE,
+  skips: readonly Skip[] = [],
 ): WeekSummary {
   const weekRuns = runsInWeek(runs, week);
   const used = new Set<string>();
   const statuses: SessionStatus[] = week.sessions.map((session) => {
     const date = dateOfWeekday(week, session.weekday);
     const run = isRunSession(session) ? weekRuns.find((r) => r.date === date) : undefined;
+    const skip = isRunSession(session) && !run ? skips.find((k) => k.date === date) : undefined;
     if (run) used.add(run.id);
     let state: SessionState;
     if (!isRunSession(session)) state = date < today ? "done" : date === today ? "today" : "upcoming";
     else if (run) state = "done";
+    else if (skip) state = "skipped";
     else if (date < today) state = "missed";
     else if (date === today) state = "today";
     else state = "upcoming";
-    return { session, date, state, run };
+    return { session, date, state, run, skip };
   });
   const runSessions = statuses.filter((s) => isRunSession(s.session));
   const painRuns = weekRuns.filter((r) => r.pain > 0);

@@ -30,13 +30,6 @@ export const CHECKLIST_SEED: readonly ChecklistItem[] = [
     weekIndex: 0,
   },
   {
-    id: "regolamento-trail",
-    title: "Regolamento del trail del 29/11",
-    detail: "Verifica quale tessera serve e se accetta la Runcard.",
-    due: "2026-11-26",
-    weekIndex: 0,
-  },
-  {
     id: "gel-trail",
     title: "Gel/barrette per il trail e i lunghi",
     detail: "Un gel ogni 40–45' nei lunghi oltre 90'. Provali al trail: mai novità il giorno della gara.",

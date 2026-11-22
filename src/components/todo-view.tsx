@@ -32,7 +32,7 @@ export function TodoView() {
         return (
           <>
             <PageTitle sub={`${done.length}/${CHECKLIST_SEED.length} completati`}>Da fare</PageTitle>
-            {open.length === 0 ? <Card tone="ok">Tutto fatto. 🎉</Card> : <Card><ul className="divide-y divide-zinc-200 dark:divide-zinc-800">{open.map((i) => row(i, false))}</ul></Card>}
+            {open.length === 0 ? <Card tone="ok">Tutto fatto.</Card> : <Card><ul className="divide-y divide-zinc-200 dark:divide-zinc-800">{open.map((i) => row(i, false))}</ul></Card>}
             {done.length > 0 ? (<><H2>Completati</H2><Card><ul className="divide-y divide-zinc-200 dark:divide-zinc-800">{done.map((i) => row(i, true))}</ul></Card></>) : null}
             <p className="mt-4 px-1 text-xs text-zinc-500">Costi e regole sono quelli del documento di partenza: verifica sempre sui siti ufficiali.</p>
           </>

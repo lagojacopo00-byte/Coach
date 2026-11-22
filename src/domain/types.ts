@@ -138,3 +138,12 @@ export interface Adjustment {
   replacement: Session;
   reason: string;
 }
+
+export const SKIP_REASONS = ["stanco", "dolore", "impegni", "malattia", "altro"] as const;
+export type SkipReason = (typeof SKIP_REASONS)[number];
+
+/** Seduta di corsa saltata, segnata a mano (R4: non si recupera). */
+export interface Skip {
+  date: IsoDate;
+  reason?: SkipReason;
+}

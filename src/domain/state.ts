@@ -1,6 +1,6 @@
 import { applyRecalculation, recalcFromThresholdTest, type Recalculation, type ThresholdTestInput } from "./rules";
 import { defaultProfile, type OnboardingInput } from "./profile";
-import type { CheckIn, IsoDate, Profile, Run } from "./types";
+import type { CheckIn, IsoDate, Profile, Run, Skip } from "./types";
 
 export const STATE_VERSION = 1;
 
@@ -19,6 +19,8 @@ export interface AppState {
   profile: Profile;
   runs: Run[];
   checkIns: CheckIn[];
+  /** Sedute segnate come non fatte. */
+  skips: Skip[];
   /** Id degli elementi spuntati nella checklist. */
   checklistDone: string[];
   /** Km settimanali delle ultime 4 settimane (onboarding), base per R1 prima dei log. */
@@ -37,6 +39,7 @@ export function initialState(): AppState {
     profile: defaultProfile(),
     runs: [],
     checkIns: [],
+    skips: [],
     checklistDone: [],
     onboardingDone: false,
     thresholdTests: [],
@@ -49,11 +52,22 @@ export function addRun(s: AppState, run: Run): AppState {
   if (!(run.km > 0) || !(run.durationSec > 0)) throw new RangeError("Km e tempo devono essere positivi");
   if (run.pain < 0 || run.pain > 10) throw new RangeError("Il dolore va da 0 a 10");
   const runs = [...s.runs.filter((r) => r.id !== run.id), run].sort(byDate);
-  return { ...s, runs };
+  // Una corsa registrata annulla un "non fatto" dello stesso giorno.
+  return { ...s, runs, skips: s.skips.filter((k) => k.date !== run.date) };
 }
 
 export function removeRun(s: AppState, id: string): AppState {
   return { ...s, runs: s.runs.filter((r) => r.id !== id) };
+}
+
+/** Segna una seduta come non fatta. Non si può se quel giorno c'è già una corsa registrata. */
+export function addSkip(s: AppState, skip: Skip): AppState {
+  if (s.runs.some((r) => r.date === skip.date)) throw new RangeError("C'è già una corsa registrata in questa data");
+  return { ...s, skips: [...s.skips.filter((k) => k.date !== skip.date), skip].sort(byDate) };
+}
+
+export function removeSkip(s: AppState, date: IsoDate): AppState {
+  return { ...s, skips: s.skips.filter((k) => k.date !== date) };
 }
 
 /** Un check-in per giorno: l'ultimo sostituisce il precedente. */
@@ -133,6 +147,7 @@ export function parseState(raw: unknown): AppState | undefined {
     ...o,
     profile: { ...base.profile, ...o.profile },
     thresholdTests: Array.isArray(o.thresholdTests) ? o.thresholdTests : [],
+    skips: Array.isArray(o.skips) ? o.skips : [],
     onboardingDone: o.onboardingDone === true,
   } as AppState;
 }

@@ -15,9 +15,9 @@ describe("views", () => {
     expect(v.next?.effective.week.sessions.some((s) => s.kind === "trail")).toBe(true);
   });
 
-  it("checklist della sett. 0: visita medica, Runcard, regolamento trail e gel; non l'iscrizione né ENDU", () => {
+  it("checklist della sett. 0: visita medica, Runcard e gel; non l'iscrizione né ENDU", () => {
     const ids = checklistForWeek([], PLAN_WEEKS[0]).map((i) => i.id);
-    expect(ids).toEqual(expect.arrayContaining(["visita-medica", "runcard", "regolamento-trail", "gel-trail"]));
+    expect(ids).toEqual(expect.arrayContaining(["visita-medica", "runcard", "gel-trail"]));
     expect(ids).not.toContain("endu-certificato");
     expect(ids).not.toContain("garmin");
     expect(checklistForWeek(["runcard"], PLAN_WEEKS[0]).map((i) => i.id)).not.toContain("runcard");
@@ -71,5 +71,43 @@ describe("views", () => {
     const v = sundayView(initialState(), "2027-03-20");
     expect(v.status).toBe("after");
     expect(v.next).toBeUndefined();
+  });
+});
+
+import { trendSeries } from "./views";
+describe("trendSeries", () => {
+  it("una riga per settimana con carico e lungo", () => {
+    const t = trendSeries(addRun(initialState(), run({ date: "2026-11-29", km: 25, kind: "trail" })));
+    expect(t).toHaveLength(16);
+    expect(t[0].longPlannedKm).toBe(25);
+    expect(t[0].longActualKm).toBe(25);
+    expect(t[0].actualKm).toBe(25);
+    expect(t[1].actualKm).toBe(0);
+    expect(t[13].longPlannedKm).toBe(32);
+    expect(t[4].deload).toBe(true);
+  });
+  it("con lo stop R3 il pianificato scende (bici al posto delle corse)", () => {
+    const s = addCheckIn(initialState(), { date: "2026-12-07", pain: 2, painLocation: "tibia", painType: "puntiforme" });
+    expect(trendSeries(s)[3].plannedKm).toBeLessThan(trendSeries(initialState())[3].plannedKm);
+  });
+});
+
+import { nextRunSession } from "./views";
+describe("nextRunSession", () => {
+  it("prima del piano è la prima corsa della sett. 0", () => {
+    const n = nextRunSession(initialState(), "2026-11-22");
+    expect(n?.date).toBe("2026-11-24");
+    expect(n?.session.kind).toBe("easy");
+  });
+  it("da un giorno di riposo dà la corsa successiva, anche nella settimana dopo", () => {
+    expect(nextRunSession(initialState(), "2026-11-25")?.date).toBe("2026-11-26");
+    expect(nextRunSession(initialState(), "2026-11-29")?.date).toBe("2026-12-01");
+  });
+  it("dopo la gara non c'è", () => {
+    expect(nextRunSession(initialState(), "2027-03-14")).toBeUndefined();
+  });
+  it("con lo stop R3 la prossima corsa è una bici? No: bici non è una corsa, quindi salta alla ripresa o non c'è", () => {
+    const s = addCheckIn(initialState(), { date: "2026-12-07", pain: 2, painLocation: "tibia", painType: "puntiforme" });
+    expect(nextRunSession(s, "2026-12-07")).toBeUndefined();
   });
 });

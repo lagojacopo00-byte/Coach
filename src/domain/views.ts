@@ -2,9 +2,9 @@ import { adviceForWeek, easyPaceOf, effectiveWeek, globalAdvice, type EffectiveW
 import { CHECKLIST_SEED, type ChecklistItem } from "./checklist.seed";
 import { PLAN_WEEKS } from "./plan.seed";
 import type { AppState } from "./state";
-import { actualWeekKm, changePct, plannedWeekKm, weekSummary, type WeekSummary } from "./summary";
+import { actualWeekKm, changePct, estimateSessionKm, isRunSession, plannedWeekKm, runsInWeek, weekSummary, type WeekSummary } from "./summary";
 import type { Advice, IsoDate, Phase, Week } from "./types";
-import { daysToRace, nextWeek, phaseForDate, planStatus, weekForDate, weekdayOf, type PlanStatus } from "./week";
+import { dateOfWeekday, daysToRace, nextWeek, phaseForDate, planStatus, weekForDate, weekdayOf, type PlanStatus } from "./week";
 
 /** Elementi della checklist ancora aperti e rilevanti per la settimana (per indice o per scadenza). */
 export function checklistForWeek(
@@ -31,7 +31,7 @@ export function weekView(state: AppState, week: Week, today: IsoDate): WeekView 
   const pace = easyPaceOf(state.profile);
   return {
     effective,
-    summary: weekSummary(effective.week, state.runs, today, pace),
+    summary: weekSummary(effective.week, state.runs, today, pace, state.skips),
     plannedKm: plannedWeekKm(effective.week, pace),
     actualKm: actualWeekKm(state.runs, week),
     advices: adviceForWeek(week, state, today),
@@ -101,4 +101,54 @@ export function todayView(state: AppState, today: IsoDate): TodayView {
     adjusted: wv?.effective.adjustments.some((a) => a.weekday === wd) ?? false,
     advices: [...globalAdvice(state, today), ...(wv?.advices.filter((a) => a.rule === "R2") ?? [])],
   };
+}
+
+const LONG_KINDS = ["long", "long_rm", "trail", "half_test", "race"];
+
+export interface TrendPoint {
+  index: number;
+  start: IsoDate;
+  deload: boolean;
+  plannedKm: number;
+  actualKm: number;
+  longPlannedKm: number;
+  /** Il più lungo tra le corse della settimana. */
+  longActualKm: number;
+}
+
+/** Andamento settimana per settimana: carico (km) e lungo, pianificato vs fatto. */
+export function trendSeries(state: AppState, weeks: readonly Week[] = PLAN_WEEKS): TrendPoint[] {
+  const pace = easyPaceOf(state.profile);
+  return weeks.map((w) => {
+    const eff = effectiveWeek(w, state).week;
+    const runs = runsInWeek(state.runs, w);
+    return {
+      index: w.index,
+      start: w.start,
+      deload: w.deload,
+      plannedKm: plannedWeekKm(eff, pace),
+      actualKm: runs.reduce((sum, r) => sum + r.km, 0),
+      longPlannedKm: Math.max(0, ...eff.sessions.filter((x) => LONG_KINDS.includes(x.kind)).map((x) => estimateSessionKm(x, pace))),
+      longActualKm: Math.max(0, ...runs.map((r) => r.km)),
+    };
+  });
+}
+
+export interface NextRun {
+  session: Week["sessions"][number];
+  date: IsoDate;
+  weekIndex: number;
+}
+
+/** Prossima corsa in programma dopo `today` (con le modifiche del coach). */
+export function nextRunSession(state: AppState, today: IsoDate): NextRun | undefined {
+  const start = weekForDate(today)?.index ?? (today < PLAN_WEEKS[0].start ? 0 : PLAN_WEEKS.length);
+  for (let i = start; i < PLAN_WEEKS.length; i++) {
+    const eff = effectiveWeek(PLAN_WEEKS[i], state).week;
+    for (const s of eff.sessions) {
+      const date = dateOfWeekday(eff, s.weekday);
+      if (date > today && isRunSession(s)) return { session: s, date, weekIndex: i };
+    }
+  }
+  return undefined;
 }
