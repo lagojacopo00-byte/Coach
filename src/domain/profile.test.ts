@@ -41,3 +41,13 @@ describe("checklist seed", () => {
     expect(dueSoon(CHECKLIST_SEED, [], "2026-12-10", 0, diffDays).map((i) => i.id)).toContain("visita-medica"); // scaduta
   });
 });
+
+import { onboardingCheckIn } from "./profile";
+describe("onboardingCheckIn", () => {
+  it("dolore tibie > 0 → check-in; puntiforme resta puntiforme", () => {
+    expect(onboardingCheckIn({ tibiaPain: 0 }, "2026-11-22")).toBeUndefined();
+    expect(onboardingCheckIn({}, "2026-11-22")).toBeUndefined();
+    expect(onboardingCheckIn({ tibiaPain: 2 }, "2026-11-22")).toEqual({ date: "2026-11-22", pain: 2, painLocation: "tibia", painType: "diffuso" });
+    expect(onboardingCheckIn({ tibiaPain: 4, tibiaPainType: "puntiforme" }, "2026-11-22")?.painType).toBe("puntiforme");
+  });
+});

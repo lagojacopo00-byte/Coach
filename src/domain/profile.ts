@@ -1,5 +1,5 @@
 import { RACE_DATE } from "./plan.seed";
-import type { Profile } from "./types";
+import type { CheckIn, Profile } from "./types";
 
 /** Profilo iniziale (HANDOFF §2/§4): target sub 4h = 5:41/km, corse mar/gio/dom, palestra lun/ven. */
 export function defaultProfile(): Profile {
@@ -45,4 +45,10 @@ export function applyOnboarding(profile: Profile, i: OnboardingInput): Profile {
     ...(i.restingHr !== undefined ? { restingHr: i.restingHr } : {}),
     ...(i.maxHr !== undefined ? { maxHr: i.maxHr } : {}),
   };
+}
+
+/** Il dolore alle tibie indicato in onboarding diventa un check-in del giorno (così R2/R3 lo vedono). */
+export function onboardingCheckIn(i: OnboardingInput, date: string): CheckIn | undefined {
+  if (i.tibiaPain === undefined || i.tibiaPain <= 0) return undefined;
+  return { date, pain: i.tibiaPain, painLocation: "tibia", painType: i.tibiaPainType ?? "diffuso" };
 }
