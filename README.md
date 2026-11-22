@@ -17,10 +17,9 @@ npm run build && npm start
 
 ## Come usarla
 
-- **Oggi**: countdown, fase, seduta del giorno, check-in "come stanno le gambe?".
-- **Domenica**: settimana che arriva, elementi da fare, riepilogo della settimana finita.
-- **Corsa**: registra una corsa in pochi secondi.
-- **Piano**: 16 settimane con le modifiche del coach (sempre con il motivo).
+- **Oggi**: l'allenamento del giorno, con ritmi e FC. Tocca **Fatto** (km, tempo, FC, D+, sensazioni, dolore) o **Non fatto** (con motivo). Sotto, la settimana giorno per giorno e il check-in "gambe pesanti o dolore?".
+- **Settimane**: tutte le 16 settimane in una griglia (righe = settimane, colonne = lun–dom), colorate per tipo di seduta (Easy, Lungo, Salite, Soglia, RM, Test/gara, Pesi). Tocca un giorno per dettagli e log, tocca il numero della settimana per il riepilogo. In fondo, l'andamento: carico settimanale e lungo, pianificato vs fatto.
+- **Corse**: per registrare una corsa fuori piano e vedere il registro.
 - **Profilo**: dati di onboarding, zone FC, **test soglia** (ricalcola zone e ritmi), **mezza di prova** (valuta il target), backup, data simulata.
 
 Per provare l'app in un'altra settimana: Profilo → Strumenti → Simula la data.

@@ -32,6 +32,12 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] Checklist elementi da fare (seed §7)
 - [x] Onboarding (§8) e inserimento LTHR
 
+## F4b Redesign (richiesta di Jacopo, 22/11)
+- [x] Griglia Settimane (righe = settimane, colonne = giorni, colori per tipo) con andamento carico/lungo
+- [x] Oggi = allenamento del giorno + Fatto/Non fatto/sensazioni; via countdown, fasi e vista Domenica
+- [x] Icone al posto delle emoji, nuovo logo
+- [ ] Import dati Garmin (serve un export reale per testare il formato)
+
 ## F5 PWA
 - [x] Manifest, icone, service worker
 - [ ] Prova "Aggiungi a Home" su iPhone (richiede hosting HTTPS e il tuo telefono)

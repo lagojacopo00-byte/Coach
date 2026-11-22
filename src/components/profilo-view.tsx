@@ -36,7 +36,7 @@ export function ProfiloView() {
           <HalfTest state={state} today={today} />
           <Backup state={state} />
           <Tools simDate={simDate} today={today} />
-          <p className="mt-6 text-center text-sm"><Link href="/todo" className="text-orange-600">Elementi da fare →</Link></p>
+          <p className="mt-6 text-center text-sm"><Link href="/todo" className="text-orange-600">Elementi da fare</Link></p>
         </>
       )}
     </WithCoach>
@@ -49,7 +49,7 @@ function StopSection({ state, today }: { state: AppState; today: string }) {
   const since = stop.since;
   return (
     <Card tone="stop" className="mb-4">
-      <p className="font-semibold">🛑 Corsa sospesa dal {stop.since ? shortDate(stop.since) : ""}</p>
+      <p className="font-semibold">Corsa sospesa dal {stop.since ? shortDate(stop.since) : ""}</p>
       <p className="mt-1 text-sm">Dolore puntiforme sull&apos;osso della tibia: bici al posto della corsa e valutazione da un medico o fisioterapista dello sport. Il coach non è un medico.</p>
       {since !== undefined && today > since ? (
         <button

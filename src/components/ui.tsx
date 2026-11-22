@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Advice } from "../domain/types";
+import { IconAlert, IconInfo, IconStop } from "./icons";
 
 type Tone = "default" | "ok" | "warn" | "stop" | "info" | "accent";
 
@@ -74,7 +75,7 @@ export function Field({ label, children, hint }: { label: string; children: Reac
 }
 
 const ADVICE_TONE: Record<Advice["level"], Tone> = { info: "info", warning: "warn", stop: "stop" };
-const ADVICE_ICON: Record<Advice["level"], string> = { info: "ℹ️", warning: "⚠️", stop: "🛑" };
+const ADVICE_ICON = { info: IconInfo, warning: IconAlert, stop: IconStop } as const;
 
 export function AdviceList({ advices }: { advices: Advice[] }) {
   if (advices.length === 0) return null;
@@ -82,9 +83,14 @@ export function AdviceList({ advices }: { advices: Advice[] }) {
     <div className="space-y-2">
       {advices.map((a, i) => (
         <Card key={`${a.rule}-${i}`} tone={ADVICE_TONE[a.level]} className="!p-3">
-          <p className="font-semibold">
-            <span aria-hidden>{ADVICE_ICON[a.level]} </span>
-            {a.title} <span className="text-xs font-normal opacity-60">{a.rule}</span>
+          <p className="flex items-center gap-2 font-semibold">
+            {(() => {
+              const Icon = ADVICE_ICON[a.level];
+              return <Icon className="h-5 w-5 shrink-0" />;
+            })()}
+            <span>
+              {a.title} <span className="text-xs font-normal opacity-60">{a.rule}</span>
+            </span>
           </p>
           <p className="mt-1 text-sm">{a.message}</p>
           {a.seeProfessional ? (

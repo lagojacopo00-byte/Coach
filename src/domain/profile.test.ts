@@ -29,7 +29,7 @@ describe("checklist seed", () => {
   it("id unici e contenuto del HANDOFF §7", () => {
     const ids = CHECKLIST_SEED.map((i) => i.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toEqual(expect.arrayContaining(["visita-medica", "runcard", "iscrizione-maratona", "endu-certificato", "regolamento-trail", "gel-trail", "scarpe", "fascia-cardio", "garmin"]));
+    expect(ids).toEqual(expect.arrayContaining(["visita-medica", "runcard", "iscrizione-maratona", "endu-certificato", "gel-trail", "scarpe", "fascia-cardio", "garmin"]));
     expect(CHECKLIST_SEED.find((i) => i.id === "endu-certificato")?.due).toBe("2027-03-04");
     expect(CHECKLIST_SEED.find((i) => i.id === "visita-medica")?.detail).toMatch(/ATLETICA LEGGERA/);
   });

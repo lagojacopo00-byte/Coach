@@ -44,3 +44,62 @@ describe("durate", () => {
     expect(formatDuration(6840)).toBe("1:54:00");
   });
 });
+
+import { sessionBrief, KIND_SHORT, WEEKDAY_SHORT } from "./guidance";
+import { PLAN_WEEKS } from "./plan.seed";
+
+describe("sessionBrief: cosa devo fare, al volo", () => {
+  const on = (w: number, wd: string) => sessionBrief(PLAN_WEEKS[w].sessions.find((x) => x.weekday === wd)!);
+  it("easy a tempo e con allunghi", () => {
+    expect(on(0, "gio")).toEqual({ main: "30'", sub: undefined });
+    expect(on(3, "gio")).toEqual({ main: "45'", sub: "+6 allunghi" });
+    expect(on(4, "mar")).toEqual({ main: "40'", sub: "+4 allunghi" });
+  });
+  it("salite e soglia: le ripetute", () => {
+    expect(on(2, "mar").main).toBe('6×30"');
+    expect(on(11, "mar").main).toBe('6×90"');
+    expect(on(13, "mar").main).toBe("6×2'");
+    expect(on(6, "mar").main).toBe("3×8'");
+    expect(on(10, "mar").main).toBe("2×15'");
+  });
+  it("lunghi, con i km a RM", () => {
+    expect(on(1, "dom")).toEqual({ main: "14 km" });
+    expect(on(6, "dom")).toEqual({ main: "20 km", sub: "4 a RM" });
+    expect(on(13, "dom")).toEqual({ main: "32 km", sub: "12 a RM" });
+  });
+  it("trail, mezza, maratona, test", () => {
+    expect(on(0, "dom").main).toBe("25 km");
+    expect(on(11, "dom").main).toBe("21,1 km");
+    expect(on(15, "dom").main).toBe("42,2 km");
+    expect(on(1, "gio").main).toBe("30'");
+  });
+  it("blocchi a RM nei tre formati del piano", () => {
+    expect(on(12, "gio")).toEqual({ main: "10 km", sub: "6 a RM" });
+    expect(on(13, "gio")).toEqual({ main: "60'", sub: "8 km RM" });
+    expect(on(14, "mar")).toEqual({ main: "3×3 km", sub: "a RM" });
+  });
+  it("palestra e riposo non hanno dati", () => {
+    expect(on(2, "lun").main).toBe("");
+    expect(on(2, "mer").main).toBe("");
+  });
+  it("ogni seduta di ogni settimana ha un'etichetta breve e i corse hanno un dato", () => {
+    for (const w of PLAN_WEEKS)
+      for (const s of w.sessions) {
+        expect(KIND_SHORT[s.kind]).toBeTruthy();
+        if (!["gym", "rest"].includes(s.kind)) expect(sessionBrief(s).main, `${w.index} ${s.weekday}`).not.toBe("");
+      }
+    expect(WEEKDAY_SHORT.lun).toBe("Lun");
+  });
+});
+
+import { detailText } from "./guidance";
+describe("detailText", () => {
+  it("toglie la ripetizione nelle salite, lascia il resto", () => {
+    const hills = PLAN_WEEKS[2].sessions.find((x) => x.kind === "hills")!;
+    expect(detailText(hills)).toBe("15' easy di riscaldamento, 10' di defaticamento");
+    const thr = PLAN_WEEKS[6].sessions.find((x) => x.kind === "threshold")!;
+    expect(detailText(thr)).toBe(thr.description);
+    const easy = PLAN_WEEKS[0].sessions.find((x) => x.kind === "easy")!;
+    expect(detailText(easy)).toBe(easy.description);
+  });
+});

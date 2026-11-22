@@ -1,0 +1,165 @@
+"use client";
+
+import { useState } from "react";
+import { updateState } from "../data/store";
+import { easyPaceOf } from "../domain/coach";
+import { detailText, formatDuration, formatPaceOrDash, KIND_LABEL, paceHint, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
+import { gelAdvice } from "../domain/rules";
+import { addSkip, removeRun, removeSkip, type AppState } from "../domain/state";
+import { isRunSession, paceOf, type SessionStatus } from "../domain/summary";
+import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason } from "../domain/types";
+import { IconCheck, IconX } from "./icons";
+import { KIND_STYLE } from "./kind-style";
+import { RunForm } from "./run-form";
+import { btnDanger, btnPrimary, btnSecondary } from "./ui";
+
+const REASON_LABEL: Record<SkipReason, string> = {
+  stanco: "Stanco",
+  dolore: "Dolore",
+  impegni: "Impegni",
+  malattia: "Malattia",
+  altro: "Altro",
+};
+
+/** Dettaglio di una seduta + azioni: fatto (con dati e sensazioni), non fatto (con motivo). */
+export function SessionPanel({
+  status,
+  adjustment,
+  state,
+  today,
+}: {
+  status: SessionStatus;
+  adjustment?: Adjustment;
+  state: AppState;
+  today: IsoDate;
+}) {
+  const { session, date, run, skip } = status;
+  const [mode, setMode] = useState<"idle" | "done" | "skip">("idle");
+  const style = KIND_STYLE[session.kind];
+  const brief = sessionBrief(session);
+  const hint = paceHint(session, state.profile);
+  const gel = gelAdvice(session, easyPaceOf(state.profile));
+  const isRun = isRunSession(session);
+  const canLog = isRun && date <= today;
+
+  return (
+    <div>
+      <div className={`rounded-2xl p-4 ${style.cell}`}>
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-70">
+          {WEEKDAY_LABEL[session.weekday]} {shortDate(date)}
+        </p>
+        <p className="mt-1 text-2xl font-bold leading-tight">
+          {KIND_LABEL[session.kind]}
+          {brief.main ? <span className="ml-2">{brief.main}</span> : null}
+        </p>
+        {brief.sub ? <p className="text-sm font-medium opacity-80">{brief.sub}</p> : null}
+        <p className="mt-2 text-sm">{detailText(session)}</p>
+      </div>
+
+      {adjustment ? (
+        <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          Cambiata dal coach ({adjustment.rule}): {adjustment.reason} Previsto: <span className="line-through">{adjustment.original.description}</span>
+        </p>
+      ) : null}
+      {hint ? <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{hint}</p> : null}
+      {gel ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{gel.message}</p> : null}
+
+      {!isRun ? null : mode === "done" ? (
+        <div className="mt-4">
+          <p className="mb-2 font-semibold">Com&apos;è andata?</p>
+          <RunForm
+            date={date}
+            defaultKind={session.kind}
+            plannedKm={session.km}
+            existing={run}
+            onSaved={() => setMode("idle")}
+            onCancel={() => setMode("idle")}
+          />
+        </div>
+      ) : mode === "skip" ? (
+        <SkipForm date={date} onDone={() => setMode("idle")} />
+      ) : run ? (
+        <div className="mt-4 rounded-2xl border border-emerald-300 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+          <p className="flex items-center gap-2 font-semibold text-emerald-900 dark:text-emerald-100">
+            <IconCheck className="h-5 w-5" /> Fatta
+          </p>
+          <p className="mt-1 text-sm">
+            {run.km.toFixed(1)} km · {formatDuration(run.durationSec)} · {formatPaceOrDash(paceOf(run))}/km
+            {run.avgHr ? ` · ${run.avgHr} bpm` : ""}
+            {run.elevationGainM ? ` · D+ ${run.elevationGainM} m` : ""}
+          </p>
+          <p className="text-sm">
+            {run.feeling ? `Sensazioni ${run.feeling}` : "Sensazioni non indicate"}
+            {run.pain > 0 ? ` · dolore ${run.pain}/10${run.painLocation ? ` (${run.painLocation}${run.painType ? `, ${run.painType}` : ""})` : ""}` : ""}
+            {run.heavyLegs ? " · gambe pesanti" : ""}
+          </p>
+          {run.notes ? <p className="mt-1 text-sm italic">{run.notes}</p> : null}
+          <div className="mt-3 flex gap-2">
+            <button type="button" className={`${btnSecondary} flex-1`} onClick={() => setMode("done")}>Modifica</button>
+            <button type="button" className={`${btnDanger} flex-1`} onClick={() => { if (window.confirm("Eliminare questa corsa?")) updateState((s) => removeRun(s, run.id)); }}>Elimina</button>
+          </div>
+        </div>
+      ) : skip ? (
+        <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/40">
+          <p className="flex items-center gap-2 font-semibold"><IconX className="h-5 w-5" /> Non fatta{skip.reason ? ` · ${REASON_LABEL[skip.reason].toLowerCase()}` : ""}</p>
+          <p className="mt-1 text-sm">Non si recupera: si va avanti col piano.</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" className={`${btnPrimary} flex-1`} onClick={() => setMode("done")}>Ho corso</button>
+            <button type="button" className={`${btnSecondary} flex-1`} onClick={() => updateState((s) => removeSkip(s, date))}>Annulla</button>
+          </div>
+        </div>
+      ) : canLog ? (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button type="button" className={btnPrimary} onClick={() => setMode("done")}>Fatto</button>
+          <button type="button" className={btnSecondary} onClick={() => setMode("skip")}>Non fatto</button>
+        </div>
+      ) : (
+        <p className="mt-4 text-sm text-zinc-500">Potrai registrarla {date === today ? "oggi" : `da ${shortDate(date)}`}.</p>
+      )}
+    </div>
+  );
+}
+
+function SkipForm({ date, onDone }: { date: IsoDate; onDone: () => void }) {
+  const [reason, setReason] = useState<SkipReason | undefined>();
+  const [error, setError] = useState<string>();
+  return (
+    <div className="mt-4">
+      <p className="mb-2 font-semibold">Perché?</p>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Motivo">
+        {SKIP_REASONS.map((r) => (
+          <button
+            key={r}
+            type="button"
+            aria-pressed={reason === r}
+            onClick={() => setReason(reason === r ? undefined : r)}
+            className={`min-h-11 rounded-xl border px-4 text-sm font-medium ${reason === r ? "border-orange-500 bg-orange-500 text-white" : "border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900"}`}
+          >
+            {REASON_LABEL[r]}
+          </button>
+        ))}
+      </div>
+      {reason === "dolore" ? (
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Se è un dolore alla tibia, segnalalo anche dal check-in in Oggi: il coach lo tiene in conto.</p>
+      ) : null}
+      {error ? <p role="alert" className="mt-2 text-sm font-medium text-red-600">{error}</p> : null}
+      <div className="mt-3 flex gap-2">
+        <button type="button" className={`${btnSecondary} flex-1`} onClick={onDone}>Indietro</button>
+        <button
+          type="button"
+          className={`${btnPrimary} flex-[2]`}
+          onClick={() => {
+            try {
+              updateState((s) => addSkip(s, { date, ...(reason ? { reason } : {}) }));
+              onDone();
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Errore");
+            }
+          }}
+        >
+          Segna non fatta
+        </button>
+      </div>
+    </div>
+  );
+}

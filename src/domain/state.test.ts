@@ -108,3 +108,26 @@ describe("state", () => {
     expect(parseState("ciao")).toBeUndefined();
   });
 });
+
+import { addSkip, removeSkip } from "./state";
+describe("non fatto", () => {
+  it("si segna, si toglie, e una corsa nello stesso giorno lo annulla", () => {
+    let s = addSkip(initialState(), { date: "2026-11-24", reason: "stanco" });
+    expect(s.skips).toEqual([{ date: "2026-11-24", reason: "stanco" }]);
+    s = addSkip(s, { date: "2026-11-24", reason: "dolore" });
+    expect(s.skips).toHaveLength(1);
+    expect(s.skips[0].reason).toBe("dolore");
+    expect(removeSkip(s, "2026-11-24").skips).toEqual([]);
+    s = addRun(s, { id: "a", date: "2026-11-24", kind: "easy", km: 5, durationSec: 1800, pain: 0 });
+    expect(s.skips).toEqual([]);
+  });
+  it("non si può segnare non fatta una data con una corsa", () => {
+    const s = addRun(initialState(), { id: "a", date: "2026-11-24", kind: "easy", km: 5, durationSec: 1800, pain: 0 });
+    expect(() => addSkip(s, { date: "2026-11-24" })).toThrow(RangeError);
+  });
+  it("un vecchio salvataggio senza skips si legge lo stesso", () => {
+    const old = { ...initialState() } as Record<string, unknown>;
+    delete old.skips;
+    expect(parseState(old)?.skips).toEqual([]);
+  });
+});

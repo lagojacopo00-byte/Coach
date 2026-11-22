@@ -1,99 +1,129 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { CHECKLIST_SEED, dueSoon } from "../domain/checklist.seed";
-import { allCheckIns } from "../domain/state";
-import { shortDate, WEEKDAY_LABEL } from "../domain/guidance";
+import { KIND_LABEL, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
 import { PHASES } from "../domain/plan.seed";
-import { isRunSession } from "../domain/summary";
-import { todayView } from "../domain/views";
-import { diffDays, phaseProgress, weeksToRace } from "../domain/week";
+import { allCheckIns } from "../domain/state";
+import { isRunSession, type SessionStatus } from "../domain/summary";
+import { nextRunSession, todayView, weekView } from "../domain/views";
+import { diffDays, nextWeek, weekdayOf } from "../domain/week";
 import { CheckInForm } from "./checkin-form";
-import { SessionRow } from "./session-row";
-import { AdviceList, btnPrimary, btnSecondary, Card, H2, Pill, ProgressBar } from "./ui";
+import { IconCheck, IconChevron, IconX } from "./icons";
+import { KIND_STYLE } from "./kind-style";
+import { Logo } from "./logo";
+import { SessionPanel } from "./session-panel";
+import { Sheet } from "./sheet";
+import { AdviceList, Card, H2, Pill } from "./ui";
 import { WithCoach } from "./with-coach";
 
+function DayRow({ status, adjusted, onOpen }: { status: SessionStatus; adjusted: boolean; onOpen: () => void }) {
+  const { session, date, state } = status;
+  const brief = sessionBrief(session);
+  const style = KIND_STYLE[session.kind];
+  const muted = session.kind === "gym" || session.kind === "rest";
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className={`flex w-full items-stretch gap-3 rounded-xl border bg-white p-0 text-left active:bg-zinc-50 dark:bg-zinc-900 dark:active:bg-zinc-800 ${state === "today" ? "border-orange-500 ring-1 ring-orange-500" : "border-zinc-200 dark:border-zinc-800"} ${muted ? "opacity-70" : ""}`}
+      >
+        <span className={`w-2 shrink-0 rounded-l-xl ${style.bar}`} aria-hidden />
+        <span className="flex-1 py-2.5">
+          <span className="block text-xs text-zinc-500">{WEEKDAY_LABEL[session.weekday]} {shortDate(date)}{adjusted ? " · cambiata dal coach" : ""}</span>
+          <span className="block font-semibold">
+            {KIND_LABEL[session.kind]}
+            {brief.main ? <span className="ml-1.5">{brief.main}</span> : null}
+            {brief.sub ? <span className="ml-1.5 text-sm font-normal text-zinc-500">{brief.sub}</span> : null}
+          </span>
+        </span>
+        <span className="flex w-10 items-center justify-center text-zinc-400">
+          {state === "done" && !muted ? <IconCheck className="h-5 w-5 text-emerald-600" /> : state === "skipped" || state === "missed" ? <IconX className="h-5 w-5 text-amber-600" /> : <IconChevron className="h-4 w-4" />}
+        </span>
+      </button>
+    </li>
+  );
+}
+
 export function OggiView() {
+  const [open, setOpen] = useState<string | undefined>();
   return (
     <WithCoach>
       {({ state, today, simDate }) => {
         const v = todayView(state, today);
-        const profile = state.profile;
-        const urgent = dueSoon(CHECKLIST_SEED, state.checklistDone, today, 5, diffDays).filter((i) => !i.optional);
+        const displayWeek = v.week ?? nextWeek(today);
+        const wv = v.week ? v.weekView : displayWeek ? weekView(state, displayWeek, today) : undefined;
+        const statuses = wv?.summary.statuses ?? [];
+        const todayStatus = statuses.find((s) => s.date === today);
+        const adjustmentOn = (date: string) => wv?.effective.adjustments.find((a) => a.date === date);
         const todayCheckIn = allCheckIns(state).find((c) => c.date === today);
-        const todayRunDone = state.runs.some((r) => r.date === today);
-        const sessionRow = v.weekView?.summary.statuses.find((s) => s.date === today);
-        const adjustment = v.weekView?.effective.adjustments.find((a) => a.date === today);
+        const urgent = dueSoon(CHECKLIST_SEED, state.checklistDone, today, 5, diffDays).filter((i) => !i.optional);
+        const next = !todayStatus || (todayStatus.session && !isRunSession(todayStatus.session)) ? nextRunSession(state, today) : undefined;
+        const phase = displayWeek ? PHASES.find((p) => p.id === displayWeek.phase) : undefined;
+        const openStatus = statuses.find((s) => s.date === open);
 
         return (
           <>
-            <Card tone="accent" className="mb-4 mt-2">
-              <p className="text-sm opacity-90">Run Rome The Marathon · dom 14 mar 2027</p>
-              {v.daysToRace > 0 ? (
-                <p className="mt-1 text-4xl font-bold">{v.daysToRace} <span className="text-xl font-semibold">giorni</span></p>
-              ) : v.daysToRace === 0 ? (
-                <p className="mt-1 text-3xl font-bold">È oggi. Buona gara! 🏁</p>
-              ) : (
-                <p className="mt-1 text-2xl font-bold">Maratona fatta. Complimenti! 🏅</p>
-              )}
-              {v.daysToRace > 0 ? <p className="mt-1 text-sm opacity-90">{weeksToRace(today, profile.raceDate)} settimane · obiettivo sub 4h (5:41/km)</p> : null}
-              {simDate ? <p className="mt-2 inline-block rounded bg-black/20 px-2 py-0.5 text-xs">Data simulata: {shortDate(simDate)} (Profilo → Strumenti)</p> : null}
-            </Card>
+            <header className="mb-4 flex items-center gap-3 pt-2">
+              <Logo className="h-11 w-11 shrink-0" />
+              <div>
+                <h1 className="text-2xl font-bold leading-tight">{WEEKDAY_LABEL[weekdayOf(today)]} {shortDate(today)}</h1>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {v.week ? `Settimana ${v.week.index}${phase ? ` · ${phase.name}` : ""}` : displayWeek ? `Da domani: settimana ${displayWeek.index}` : "Piano concluso"}
+                  {simDate ? " · data simulata" : ""}
+                </p>
+              </div>
+            </header>
 
             <AdviceList advices={v.advices} />
 
-            <H2>Fasi</H2>
-            <Card>
-              <div className="flex gap-1" aria-label="Barra delle fasi">
-                {PHASES.map((p) => (
-                  <div key={p.id} className="flex-1">
-                    <ProgressBar value={phaseProgress(p, today)} label={`Fase ${p.id}: ${p.name}`} />
-                    <p className={`mt-1 truncate text-[10px] ${v.phase?.id === p.id ? "font-bold text-orange-600 dark:text-orange-400" : "text-zinc-500"}`}>{p.id} · {p.name}</p>
-                  </div>
-                ))}
-              </div>
-              {v.phase ? (
-                <p className="mt-3 text-sm">
-                  <span className="font-semibold">Fase {v.phase.id} – {v.phase.name}</span> · {v.phase.focus}
-                  {v.week ? <span className="text-zinc-500"> · settimana {v.week.index}/15</span> : null}
-                </p>
-              ) : (
-                <p className="mt-3 text-sm">{v.status === "before" ? "Il piano parte lunedì 23 novembre con la settimana 0 (scarico + trail easy)." : "Il piano è concluso."}</p>
-              )}
-            </Card>
-
-            {v.status === "before" ? (
-              <Card className="mt-4" tone="info">
-                <p className="font-semibold">Stasera è domenica sera</p>
-                <p className="mt-1 text-sm">Guarda la settimana che parte domani e gli elementi da sistemare.</p>
-                <Link href="/domenica" className={`${btnPrimary} mt-3 w-full`}>Apri la vista Domenica</Link>
+            <H2>Oggi</H2>
+            {todayStatus ? (
+              <Card className="!p-3">
+                <SessionPanel key={todayStatus.date} status={todayStatus} adjustment={adjustmentOn(todayStatus.date)} state={state} today={today} />
               </Card>
-            ) : null}
-
-            {v.week && v.todaySession && sessionRow ? (
-              <>
-                <H2>Oggi · {WEEKDAY_LABEL[v.todaySession.weekday]} {shortDate(today)}</H2>
-                <ul>
-                  <SessionRow status={sessionRow} profile={profile} adjustment={adjustment} />
-                </ul>
-                {isRunSession(v.todaySession) && !todayRunDone ? (
-                  <Link href="/corsa" className={`${btnPrimary} mt-3 w-full`}>Registra la corsa</Link>
-                ) : null}
-              </>
+            ) : (
+              <Card>
+                <p className="font-semibold">Nessun allenamento in programma oggi.</p>
+                <p className="mt-1 text-sm text-zinc-500">{v.status === "before" ? "Il piano parte lunedì 23 novembre." : "Il piano è concluso."}</p>
+              </Card>
+            )}
+            {next ? (
+              <p className="mt-2 px-1 text-sm text-zinc-600 dark:text-zinc-400">
+                Prossima corsa: <span className="font-semibold">{WEEKDAY_LABEL[next.session.weekday]} {shortDate(next.date)}</span> · {KIND_LABEL[next.session.kind]} {sessionBrief(next.session).main}
+              </p>
             ) : null}
 
             {v.status === "during" ? (
-              <>
-                <H2>Come stanno le gambe?</H2>
-                <Card>
+              <details className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <summary className="cursor-pointer font-semibold">Gambe pesanti o dolore?</summary>
+                <div className="mt-3">
                   <CheckInForm key={today + (todayCheckIn ? "x" : "")} today={today} current={todayCheckIn} />
-                </Card>
+                </div>
+              </details>
+            ) : null}
+
+            {wv ? (
+              <>
+                <H2 right={<Link href="/settimane" className="text-sm font-medium text-orange-600 dark:text-orange-400">Tutte le settimane</Link>}>
+                  {v.week ? "Questa settimana" : `Settimana ${displayWeek?.index}`}
+                </H2>
+                <ul className="space-y-2">
+                  {statuses.map((s) => (
+                    <DayRow key={s.date} status={s} adjusted={Boolean(adjustmentOn(s.date))} onOpen={() => setOpen(s.date)} />
+                  ))}
+                </ul>
+                <p className="mt-3 text-center text-sm text-zinc-500">
+                  {wv.actualKm.toFixed(1)} km fatti · ~{wv.plannedKm.toFixed(0)} km previsti
+                </p>
               </>
             ) : null}
 
             {urgent.length > 0 ? (
               <>
-                <H2 right={<Link href="/todo" className="text-sm text-orange-600">Tutte</Link>}>Da fare a breve</H2>
+                <H2 right={<Link href="/todo" className="text-sm font-medium text-orange-600 dark:text-orange-400">Tutte</Link>}>Da fare a breve</H2>
                 <Card>
                   <ul className="space-y-2">
                     {urgent.slice(0, 4).map((i) => (
@@ -107,24 +137,11 @@ export function OggiView() {
               </>
             ) : null}
 
-            {v.weekView ? (
-              <>
-                <H2 right={<Link href="/domenica" className="text-sm text-orange-600">Domenica sera</Link>}>Questa settimana</H2>
-                <ul className="space-y-2">
-                  {v.weekView.summary.statuses.map((s) => (
-                    <SessionRow key={s.session.weekday} status={s} profile={profile} showHint={false} adjustment={v.weekView?.effective.adjustments.find((a) => a.date === s.date)} />
-                  ))}
-                </ul>
-                <p className="mt-3 text-center text-sm text-zinc-500">
-                  {v.weekView.actualKm.toFixed(1)} km fatti · ~{v.weekView.plannedKm.toFixed(0)} km previsti
-                </p>
-              </>
+            {openStatus ? (
+              <Sheet title={`${WEEKDAY_LABEL[openStatus.session.weekday]} ${shortDate(openStatus.date)}`} onClose={() => setOpen(undefined)}>
+                <SessionPanel key={openStatus.date} status={openStatus} adjustment={adjustmentOn(openStatus.date)} state={state} today={today} />
+              </Sheet>
             ) : null}
-
-            <div className="mt-6 grid grid-cols-2 gap-2">
-              <Link href="/piano" className={btnSecondary}>Piano 16 settimane</Link>
-              <Link href="/todo" className={btnSecondary}>Da fare</Link>
-            </div>
           </>
         );
       }}

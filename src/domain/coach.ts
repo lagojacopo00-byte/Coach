@@ -127,8 +127,8 @@ export function adviceForWeek(base: Week, state: AppState, today: IsoDate): Advi
     });
   }
 
-  const sum = weekSummary(week, state.runs, today, pace);
-  const missed = missedSessionAdvice(sum.statuses.filter((s) => s.state === "missed").map((s) => s.session));
+  const sum = weekSummary(week, state.runs, today, pace, state.skips);
+  const missed = missedSessionAdvice(sum.statuses.filter((s) => s.state === "missed" || s.state === "skipped").map((s) => s.session));
   if (missed) out.push(missed);
 
   const base_ = baseWeeklyKm(state, week);

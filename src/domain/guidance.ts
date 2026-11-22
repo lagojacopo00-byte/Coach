@@ -32,7 +32,7 @@ export function paceHint(session: Session, profile: Profile): string | undefined
     case "half_test":
       return "Obiettivo ≤1:54:00 (5:24/km). Parti controllato, gel e acqua come in gara.";
     case "threshold_test":
-      return "15' di riscaldamento, poi 30' al massimo sostenibile costante. La FC media degli ultimi 20' è la tua LTHR.";
+      return "La FC media degli ultimi 20' è la tua LTHR: poi inseriscila in Profilo per ricalcolare zone e ritmi.";
     case "bike":
       return "Bici Z2, sforzo facile e conversazionale.";
     default:
@@ -97,4 +97,83 @@ export function formatPaceOrDash(secPerKm: number | undefined): string {
   if (secPerKm === undefined || !Number.isFinite(secPerKm) || secPerKm <= 0) return "–";
   const t = Math.round(secPerKm);
   return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+}
+
+const fmtKm = (n: number): string => `${Number.isInteger(n) ? n : n.toFixed(1).replace(".", ",")} km`;
+
+export interface SessionBrief {
+  /** Dato principale (km, durata, ripetute). */
+  main: string;
+  /** Dato secondario (km a RM, allunghi…). */
+  sub?: string;
+}
+
+/** Riassunto di una riga per la griglia: cosa devo fare, al volo. */
+export function sessionBrief(s: Session): SessionBrief {
+  const min = s.durationMin !== undefined ? `${s.durationMin}'` : "";
+  switch (s.kind) {
+    case "easy": {
+      const all = /(\d+) allunghi/.exec(s.description);
+      return { main: min, sub: all ? `+${all[1]} allunghi` : undefined };
+    }
+    case "hills": {
+      const reps = /Salite\s+([^.\s]+)/.exec(s.description);
+      return { main: reps ? reps[1] : "" };
+    }
+    case "threshold": {
+      const reps = /(\d+×\d+')/.exec(s.description);
+      return { main: reps ? reps[1] : "" };
+    }
+    case "long":
+    case "trail":
+    case "half_test":
+    case "race":
+      return { main: s.km !== undefined ? fmtKm(s.km) : "" };
+    case "long_rm":
+      return { main: s.km !== undefined ? fmtKm(s.km) : "", sub: s.rmKm !== undefined ? `${s.rmKm} a RM` : undefined };
+    case "rm_blocks": {
+      if (s.km !== undefined) return { main: fmtKm(s.km), sub: s.rmKm !== undefined ? `${s.rmKm} a RM` : undefined };
+      if (s.durationMin !== undefined) return { main: min, sub: s.rmKm !== undefined ? `${s.rmKm} km RM` : undefined };
+      const reps = /(\d+×\d+ km)/.exec(s.description);
+      return { main: reps ? reps[1] : "", sub: "a RM" };
+    }
+    case "threshold_test":
+    case "bike":
+      return { main: min };
+    default:
+      return { main: "" };
+  }
+}
+
+/** Etichetta breve del tipo, per le celle della griglia. */
+export const KIND_SHORT: Record<string, string> = {
+  easy: "Easy",
+  hills: "Salite",
+  threshold: "Soglia",
+  long: "Lungo",
+  long_rm: "Lungo",
+  rm_blocks: "RM",
+  threshold_test: "Test",
+  trail: "Trail",
+  half_test: "Mezza",
+  race: "Gara",
+  gym: "Pesi",
+  bike: "Bici",
+  rest: "Riposo",
+};
+
+export const WEEKDAY_SHORT: Record<string, string> = {
+  lun: "Lun",
+  mar: "Mar",
+  mer: "Mer",
+  gio: "Gio",
+  ven: "Ven",
+  sab: "Sab",
+  dom: "Dom",
+};
+
+/** Descrizione senza ripetere ciò che il titolo dice già (es. "Salite 6×30". " all'inizio). */
+export function detailText(s: Session): string {
+  if (s.kind === "hills") return s.description.replace(/^Salite\s+[^.]*\.\s*/, "") || s.description;
+  return s.description;
 }
