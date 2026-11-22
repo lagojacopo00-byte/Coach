@@ -10,7 +10,7 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] `plan.seed.ts`: 16 settimane + settimana 0 (§4), con test di coerenza (date, fasi, sett. 15 = maratona)
 - [x] `week.ts`: settimana corrente da una data, fase, countdown alla gara
 - [x] `zones.ts`: zone FC da LTHR e ritmi easy/soglia (§5)
-- [ ] `summary.ts`: pianificato vs fatto, km settimanali, variazione % settimanale
+- [x] `summary.ts`: pianificato vs fatto, km settimanali, variazione % settimanale
 
 ## F2 Regole coach (`src/domain/rules.ts`)
 - [ ] R1 tetto +10% settimanale (scarichi sett. 4 e 9 esclusi)

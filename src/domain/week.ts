@@ -1,5 +1,6 @@
 import { PHASES, PLAN_WEEKS, RACE_DATE } from "./plan.seed";
-import type { IsoDate, Phase, Week } from "./types";
+import { WEEKDAYS } from "./types";
+import type { IsoDate, Phase, Week, Weekday } from "./types";
 
 const DAY_MS = 86_400_000;
 
@@ -51,4 +52,28 @@ export function phaseProgress(phase: Phase, date: IsoDate): number {
   const total = diffDays(phase.start, phase.end) + 1;
   const done = diffDays(phase.start, date) + 1;
   return Math.min(1, Math.max(0, done / total));
+}
+
+/** Giorno della settimana (lun…dom) di una data ISO. */
+export function weekdayOf(date: IsoDate): Weekday {
+  const d = new Date(toMs(date)).getUTCDay(); // 0 = domenica
+  return WEEKDAYS[(d + 6) % 7];
+}
+
+/** Data ISO del giorno `weekday` dentro la settimana. */
+export function dateOfWeekday(week: Week, weekday: Weekday): IsoDate {
+  const offset = WEEKDAYS.indexOf(weekday);
+  return new Date(toMs(week.start) + offset * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** Data di oggi nel fuso locale del dispositivo, come ISO "YYYY-MM-DD". */
+export function localTodayIso(now: Date = new Date()): IsoDate {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function addDays(date: IsoDate, days: number): IsoDate {
+  return new Date(toMs(date) + days * DAY_MS).toISOString().slice(0, 10);
 }

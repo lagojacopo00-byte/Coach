@@ -92,3 +92,25 @@ describe("week", () => {
     expect(phaseProgress(base, "2026-12-14")).toBeCloseTo(15 / 28);
   });
 });
+
+import { addDays, dateOfWeekday, localTodayIso, weekdayOf } from "./week";
+
+describe("week: giorni", () => {
+  it("weekdayOf", () => {
+    expect(weekdayOf("2026-11-23")).toBe("lun");
+    expect(weekdayOf("2026-11-29")).toBe("dom");
+    expect(weekdayOf("2027-03-14")).toBe("dom");
+    expect(weekdayOf("2026-12-03")).toBe("gio");
+  });
+  it("dateOfWeekday e addDays", () => {
+    const w = PLAN_WEEKS[1];
+    expect(dateOfWeekday(w, "lun")).toBe("2026-11-30");
+    expect(dateOfWeekday(w, "gio")).toBe("2026-12-03");
+    expect(dateOfWeekday(w, "dom")).toBe("2026-12-06");
+    expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
+  });
+  it("localTodayIso usa la data locale", () => {
+    expect(localTodayIso(new Date(2026, 10, 22, 23, 59))).toBe("2026-11-22");
+    expect(localTodayIso(new Date(2027, 0, 5, 0, 1))).toBe("2027-01-05");
+  });
+});
