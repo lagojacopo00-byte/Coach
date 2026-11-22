@@ -42,5 +42,4 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 ## Blocchi
 - F3 Supabase: serve un progetto Supabase (URL + anon key) creato da Jacopo; la task è "supervisionata" e tocca dati sensibili (salute). Fino ad allora i dati stanno su localStorage, con backup manuale.
 - R1: il piano base supera il +10% nelle sett. 2, 6, 8, 12, 15 (dopo settimane leggere o con la gara). Il seed non si tocca: l'app avvisa solo sui km reali. Da rivedere con Jacopo.
-- `npm run typecheck` in un clone fresco richiede `npx next typegen` (tipo globale `LayoutProps`); in CI va messo prima del typecheck.
 - Dopo i test fisici (soglia 3/12, mezza 14/02) i risultati si inseriscono in Profilo: ricalcolano zone/ritmi (R5) e valutano il target (R7). Eventuali modifiche al piano base vanno fatte a mano su `plan.seed.ts`.

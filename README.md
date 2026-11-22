@@ -6,7 +6,6 @@ Web app personale (PWA, pensata per iPhone) per la Maratona di Roma del 14/03/20
 
 ```bash
 npm install
-npx next typegen   # solo in un clone fresco
 npm run dev        # http://localhost:3000
 ```
 
