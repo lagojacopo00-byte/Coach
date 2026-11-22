@@ -22,20 +22,25 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] R7 mezza 14/02 oltre 1:54 → proposta di rivedere il target
 
 ## F3 Supabase (supervisionato)
-- [ ] Migrazioni, RLS utente singolo, auth magic link, repository in `src/data/`
+- [x] Repository locale (localStorage) con backup/ripristino JSON in `src/data/` (interfaccia `StateRepository`)
+- [ ] Migrazioni, RLS utente singolo, auth magic link, repository Supabase (serve un progetto Supabase)
 
 ## F4 UI (mobile-first)
-- [ ] Vista Domenica sera: prossima settimana + checklist + riepilogo
-- [ ] Form rapido log corsa
-- [ ] Piano 16 settimane, barra fasi, countdown
-- [ ] Checklist elementi da fare (seed §7)
-- [ ] Onboarding (§8) e inserimento LTHR
+- [x] Vista Domenica sera: prossima settimana + checklist + riepilogo
+- [x] Form rapido log corsa
+- [x] Piano 16 settimane, barra fasi, countdown
+- [x] Checklist elementi da fare (seed §7)
+- [x] Onboarding (§8) e inserimento LTHR
 
 ## F5 PWA
-- [ ] Manifest, icone, service worker, prova "Aggiungi a Home" su iPhone
+- [x] Manifest, icone, service worker
+- [ ] Prova "Aggiungi a Home" su iPhone (richiede hosting HTTPS e il tuo telefono)
 
 ## F6 Fase 2 (opzionale)
 - [ ] Import Garmin .fit/.csv, grafici, coach chat Claude API
 
 ## Blocchi
-(nessuno)
+- F3 Supabase: serve un progetto Supabase (URL + anon key) creato da Jacopo; la task è "supervisionata" e tocca dati sensibili (salute). Fino ad allora i dati stanno su localStorage, con backup manuale.
+- R1: il piano base supera il +10% nelle sett. 2, 6, 8, 12, 15 (dopo settimane leggere o con la gara). Il seed non si tocca: l'app avvisa solo sui km reali. Da rivedere con Jacopo.
+- `npm run typecheck` in un clone fresco richiede `npx next typegen` (tipo globale `LayoutProps`); in CI va messo prima del typecheck.
+- Dopo i test fisici (soglia 3/12, mezza 14/02) i risultati si inseriscono in Profilo: ricalcolano zone/ritmi (R5) e valutano il target (R7). Eventuali modifiche al piano base vanno fatte a mano su `plan.seed.ts`.

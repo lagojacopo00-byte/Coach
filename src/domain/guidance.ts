@@ -91,3 +91,10 @@ export function formatDuration(totalSec: number): string {
   const s = t % 60;
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
 }
+
+/** Passo formattato mm:ss, oppure "–" se non disponibile. */
+export function formatPaceOrDash(secPerKm: number | undefined): string {
+  if (secPerKm === undefined || !Number.isFinite(secPerKm) || secPerKm <= 0) return "–";
+  const t = Math.round(secPerKm);
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+}

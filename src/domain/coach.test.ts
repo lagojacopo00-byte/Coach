@@ -152,3 +152,14 @@ describe("coach: messaggi", () => {
     expect(kindOn(s, PLAN_WEEKS[1], "gio")).toBe("threshold_test");
   });
 });
+
+describe("coach: un solo avviso R3 per settimana", () => {
+  it("niente banner duplicati", () => {
+    const s = addCheckIn(initialState(), { date: "2026-12-08", pain: 2, painLocation: "tibia", painType: "puntiforme" });
+    const r3 = adviceForWeek(W2, s, "2026-12-08").filter((a) => a.rule === "R3");
+    expect(r3).toHaveLength(1);
+    expect(r3[0].title).toMatch(/MAR|GIO|DOM/);
+    const today = globalAdvice(s, "2026-12-08").filter((a) => a.rule === "R3");
+    expect(today).toHaveLength(1);
+  });
+});

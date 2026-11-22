@@ -107,13 +107,23 @@ export function adviceForWeek(base: Week, state: AppState, today: IsoDate): Advi
   const pace = easyPaceOf(state.profile);
   const out: Advice[] = [];
 
-  for (const a of adjustments) {
+  // R3: un solo avviso per settimana (il banner globale spiega già il perché).
+  const stopped = adjustments.filter((a) => a.rule === "R3");
+  if (stopped.length > 0) {
     out.push({
-      rule: a.rule,
-      level: a.rule === "R3" ? "stop" : "warning",
-      title: `${a.weekday.toUpperCase()}: ${a.original.kind === "easy" ? "corsa" : "qualità"} cambiata`,
+      rule: "R3",
+      level: "stop",
+      title: `Corsa sospesa: ${stopped.map((a) => a.weekday.toUpperCase()).join(", ")} in bici`,
+      message: "Le corse di questa settimana diventano bici Z2 finché non c'è una valutazione professionale.",
+      seeProfessional: true,
+    });
+  }
+  for (const a of adjustments.filter((x) => x.rule === "R2")) {
+    out.push({
+      rule: "R2",
+      level: "warning",
+      title: `${a.weekday.toUpperCase()}: qualità cambiata in easy`,
       message: `${a.reason} Nuova seduta: ${a.replacement.description}.`,
-      seeProfessional: a.rule === "R3",
     });
   }
 

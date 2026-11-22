@@ -99,6 +99,6 @@ export function todayView(state: AppState, today: IsoDate): TodayView {
     weekView: wv,
     todaySession,
     adjusted: wv?.effective.adjustments.some((a) => a.weekday === wd) ?? false,
-    advices: [...globalAdvice(state, today), ...(wv?.advices.filter((a) => a.rule === "R2" || a.rule === "R3") ?? [])],
+    advices: [...globalAdvice(state, today), ...(wv?.advices.filter((a) => a.rule === "R2") ?? [])],
   };
 }
