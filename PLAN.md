@@ -8,34 +8,38 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 ## F1 Dominio (`src/domain/`)
 - [x] Tipi: Session, Week, Phase, Run, Profile
 - [x] `plan.seed.ts`: 16 settimane + settimana 0 (§4), con test di coerenza (date, fasi, sett. 15 = maratona)
-- [ ] `week.ts`: settimana corrente da una data, fase, countdown alla gara
-- [ ] `zones.ts`: zone FC da LTHR e ritmi easy/soglia (§5)
-- [ ] `summary.ts`: pianificato vs fatto, km settimanali, variazione % settimanale
+- [x] `week.ts`: settimana corrente da una data, fase, countdown alla gara
+- [x] `zones.ts`: zone FC da LTHR e ritmi easy/soglia (§5)
+- [x] `summary.ts`: pianificato vs fatto, km settimanali, variazione % settimanale
 
 ## F2 Regole coach (`src/domain/rules.ts`)
-- [ ] R1 tetto +10% settimanale (scarichi sett. 4 e 9 esclusi)
-- [ ] R2 martedì con gambe pesanti/tibie doloranti → easy
-- [ ] R3 dolore puntiforme sull'osso → stop corsa, bici, avviso medico
-- [ ] R4 seduta saltata: nessun recupero
-- [ ] R5 ricalcolo ritmi dopo test soglia
-- [ ] R6 promemoria gel nei lunghi > 90'
-- [ ] R7 mezza 14/02 oltre 1:54 → proposta di rivedere il target
+- [x] R1 tetto +10% settimanale (scarichi sett. 4 e 9 esclusi)
+- [x] R2 martedì con gambe pesanti/tibie doloranti → easy
+- [x] R3 dolore puntiforme sull'osso → stop corsa, bici, avviso medico
+- [x] R4 seduta saltata: nessun recupero
+- [x] R5 ricalcolo ritmi dopo test soglia
+- [x] R6 promemoria gel nei lunghi > 90'
+- [x] R7 mezza 14/02 oltre 1:54 → proposta di rivedere il target
 
 ## F3 Supabase (supervisionato)
-- [ ] Migrazioni, RLS utente singolo, auth magic link, repository in `src/data/`
+- [x] Repository locale (localStorage) con backup/ripristino JSON in `src/data/` (interfaccia `StateRepository`)
+- [ ] Migrazioni, RLS utente singolo, auth magic link, repository Supabase (serve un progetto Supabase)
 
 ## F4 UI (mobile-first)
-- [ ] Vista Domenica sera: prossima settimana + checklist + riepilogo
-- [ ] Form rapido log corsa
-- [ ] Piano 16 settimane, barra fasi, countdown
-- [ ] Checklist elementi da fare (seed §7)
-- [ ] Onboarding (§8) e inserimento LTHR
+- [x] Vista Domenica sera: prossima settimana + checklist + riepilogo
+- [x] Form rapido log corsa
+- [x] Piano 16 settimane, barra fasi, countdown
+- [x] Checklist elementi da fare (seed §7)
+- [x] Onboarding (§8) e inserimento LTHR
 
 ## F5 PWA
-- [ ] Manifest, icone, service worker, prova "Aggiungi a Home" su iPhone
+- [x] Manifest, icone, service worker
+- [ ] Prova "Aggiungi a Home" su iPhone (richiede hosting HTTPS e il tuo telefono)
 
 ## F6 Fase 2 (opzionale)
 - [ ] Import Garmin .fit/.csv, grafici, coach chat Claude API
 
 ## Blocchi
-(nessuno)
+- F3 Supabase: serve un progetto Supabase (URL + anon key) creato da Jacopo; la task è "supervisionata" e tocca dati sensibili (salute). Fino ad allora i dati stanno su localStorage, con backup manuale.
+- R1: il piano base supera il +10% nelle sett. 2, 6, 8, 12, 15 (dopo settimane leggere o con la gara). Il seed non si tocca: l'app avvisa solo sui km reali. Da rivedere con Jacopo.
+- Dopo i test fisici (soglia 3/12, mezza 14/02) i risultati si inseriscono in Profilo: ricalcolano zone/ritmi (R5) e valutano il target (R7). Eventuali modifiche al piano base vanno fatte a mano su `plan.seed.ts`.

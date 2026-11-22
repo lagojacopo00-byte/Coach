@@ -99,3 +99,42 @@ export interface Profile {
   runDays: Weekday[];
   gymDays: Weekday[];
 }
+
+/** Come stanno le gambe in un giorno (da check-in o dal log di una corsa). */
+export interface CheckIn {
+  date: IsoDate;
+  /** Dolore 0–10. */
+  pain: number;
+  painLocation?: PainLocation;
+  painType?: PainType;
+  heavyLegs?: boolean;
+}
+
+export const RULE_IDS = ["R1", "R2", "R3", "R4", "R5", "R6", "R7"] as const;
+export type RuleId = (typeof RULE_IDS)[number];
+
+export type AdviceLevel = "info" | "warning" | "stop";
+
+/** Messaggio del coach, sempre con la regola che l'ha prodotto. */
+export interface Advice {
+  rule: RuleId;
+  level: AdviceLevel;
+  title: string;
+  message: string;
+  /** Rimanda a un professionista (medico/fisioterapista). */
+  seeProfessional?: boolean;
+}
+
+/**
+ * Override del piano: sostituisce una seduta del seed con un'altra, con motivo.
+ * Il seed non viene mai riscritto.
+ */
+export interface Adjustment {
+  rule: RuleId;
+  weekIndex: number;
+  weekday: Weekday;
+  date: IsoDate;
+  original: Session;
+  replacement: Session;
+  reason: string;
+}

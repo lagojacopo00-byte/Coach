@@ -1,0 +1,142 @@
+import { applyRecalculation, recalcFromThresholdTest, type Recalculation, type ThresholdTestInput } from "./rules";
+import { defaultProfile, type OnboardingInput } from "./profile";
+import type { CheckIn, IsoDate, Profile, Run } from "./types";
+
+export const STATE_VERSION = 1;
+
+export interface ThresholdTestRecord extends ThresholdTestInput {
+  date: IsoDate;
+}
+
+export interface HalfRecord {
+  date: IsoDate;
+  timeSec: number;
+}
+
+/** Tutto ciò che l'app salva. Il piano base NON è qui: vive nel seed. */
+export interface AppState {
+  version: number;
+  profile: Profile;
+  runs: Run[];
+  checkIns: CheckIn[];
+  /** Id degli elementi spuntati nella checklist. */
+  checklistDone: string[];
+  /** Km settimanali delle ultime 4 settimane (onboarding), base per R1 prima dei log. */
+  baselineWeeklyKm?: number;
+  onboarding?: OnboardingInput;
+  onboardingDone: boolean;
+  thresholdTests: ThresholdTestRecord[];
+  halfResult?: HalfRecord;
+  /** R3: data fino alla quale una valutazione professionale ha dato il via libera a riprendere. */
+  runClearedOn?: IsoDate;
+}
+
+export function initialState(): AppState {
+  return {
+    version: STATE_VERSION,
+    profile: defaultProfile(),
+    runs: [],
+    checkIns: [],
+    checklistDone: [],
+    onboardingDone: false,
+    thresholdTests: [],
+  };
+}
+
+const byDate = <T extends { date: IsoDate }>(a: T, b: T) => a.date.localeCompare(b.date);
+
+export function addRun(s: AppState, run: Run): AppState {
+  if (!(run.km > 0) || !(run.durationSec > 0)) throw new RangeError("Km e tempo devono essere positivi");
+  if (run.pain < 0 || run.pain > 10) throw new RangeError("Il dolore va da 0 a 10");
+  const runs = [...s.runs.filter((r) => r.id !== run.id), run].sort(byDate);
+  return { ...s, runs };
+}
+
+export function removeRun(s: AppState, id: string): AppState {
+  return { ...s, runs: s.runs.filter((r) => r.id !== id) };
+}
+
+/** Un check-in per giorno: l'ultimo sostituisce il precedente. */
+export function addCheckIn(s: AppState, c: CheckIn): AppState {
+  if (c.pain < 0 || c.pain > 10) throw new RangeError("Il dolore va da 0 a 10");
+  return { ...s, checkIns: [...s.checkIns.filter((x) => x.date !== c.date), c].sort(byDate) };
+}
+
+export function toggleChecklist(s: AppState, id: string): AppState {
+  const done = s.checklistDone.includes(id) ? s.checklistDone.filter((x) => x !== id) : [...s.checklistDone, id];
+  return { ...s, checklistDone: done };
+}
+
+/** R5: registra il test di soglia e ricalcola LTHR e ritmi sul profilo. */
+export function recordThresholdTest(
+  s: AppState,
+  t: ThresholdTestRecord,
+): { state: AppState; recalculation: Recalculation } {
+  const recalculation = recalcFromThresholdTest(t);
+  return {
+    recalculation,
+    state: {
+      ...s,
+      profile: applyRecalculation(s.profile, recalculation),
+      thresholdTests: [...s.thresholdTests.filter((x) => x.date !== t.date), t].sort(byDate),
+    },
+  };
+}
+
+export function recordHalf(s: AppState, h: HalfRecord): AppState {
+  if (!(h.timeSec > 0)) throw new RangeError("Tempo non valido");
+  return { ...s, halfResult: h };
+}
+
+/** R3: via libera dopo valutazione professionale. */
+export function clearRunStop(s: AppState, today: IsoDate): AppState {
+  return { ...s, runClearedOn: today };
+}
+
+/** Check-in effettivi: quelli espliciti più i dati di dolore/gambe dei log di corsa. */
+export function allCheckIns(s: AppState): CheckIn[] {
+  const fromRuns: CheckIn[] = s.runs.map((r) => ({
+    date: r.date,
+    pain: r.pain,
+    painLocation: r.painLocation,
+    painType: r.painType,
+    heavyLegs: r.heavyLegs,
+  }));
+  // Per lo stesso giorno vale il dato peggiore: non si nasconde un dolore.
+  const merged = new Map<IsoDate, CheckIn>();
+  for (const c of [...fromRuns, ...s.checkIns]) {
+    const prev = merged.get(c.date);
+    merged.set(c.date, prev ? worst(prev, c) : c);
+  }
+  return [...merged.values()].sort(byDate);
+}
+
+function worst(a: CheckIn, b: CheckIn): CheckIn {
+  const hi = a.pain >= b.pain ? a : b;
+  const point = [a, b].find((c) => c.painLocation === "tibia" && c.painType === "puntiforme" && c.pain >= 1);
+  return {
+    ...hi,
+    ...(point ? { painLocation: point.painLocation, painType: point.painType, pain: Math.max(hi.pain, point.pain) } : {}),
+    heavyLegs: a.heavyLegs === true || b.heavyLegs === true,
+  };
+}
+
+/** Validazione di uno stato letto dallo storage o da un backup: scarta ciò che non è riconoscibile. */
+export function parseState(raw: unknown): AppState | undefined {
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const o = raw as Partial<AppState>;
+  if (o.version !== STATE_VERSION) return undefined;
+  if (!o.profile || !Array.isArray(o.runs) || !Array.isArray(o.checkIns) || !Array.isArray(o.checklistDone)) return undefined;
+  const base = initialState();
+  return {
+    ...base,
+    ...o,
+    profile: { ...base.profile, ...o.profile },
+    thresholdTests: Array.isArray(o.thresholdTests) ? o.thresholdTests : [],
+    onboardingDone: o.onboardingDone === true,
+  } as AppState;
+}
+
+export function applyOnboardingToState(s: AppState, i: OnboardingInput, profile: Profile): AppState {
+  return { ...s, profile, onboarding: i, baselineWeeklyKm: i.weeklyKmLast4, onboardingDone: true };
+}
