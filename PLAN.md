@@ -6,7 +6,7 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] Next.js + Tailwind + TypeScript, Vitest, lint, CI, CLAUDE.md, PLAN.md, HANDOFF
 
 ## F1 Dominio (`src/domain/`)
-- [ ] Tipi: Session, Week, Phase, Run, Profile
+- [x] Tipi: Session, Week, Phase, Run, Profile
 - [ ] `plan.seed.ts`: 16 settimane + settimana 0 (§4), con test di coerenza (date, fasi, sett. 15 = maratona)
 - [ ] `week.ts`: settimana corrente da una data, fase, countdown alla gara
 - [ ] `zones.ts`: zone FC da LTHR e ritmi easy/soglia (§5)
