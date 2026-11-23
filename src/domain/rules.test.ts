@@ -125,7 +125,7 @@ describe("R5 ricalcolo dopo il test di soglia", () => {
       targetPaceSecPerKm: 341,
       raceDate: "2027-03-14",
       runDays: ["mar", "gio", "dom"],
-      gymDays: ["lun", "ven"],
+      gymDays: ["lun", "mer"],
     };
     expect(applyRecalculation(p, r)).toMatchObject({ lthr: 171, thresholdPaceSecPerKm: 330, name: "Jacopo" });
   });
@@ -174,13 +174,17 @@ describe("R7 mezza del 14/02", () => {
 });
 
 import { extraEasySession, extraEasyStatus, type ExtraEasyInput } from "./rules";
-describe("R8 easy facoltativa del mercoledì", () => {
+describe("R8 easy facoltativa del venerdì", () => {
   const ok: ExtraEasyInput = { weekIndex: 5, today: "2026-12-28", checkIns: [], stopActive: false, plannedKm: 30, baseKm: 36, extraKm: 5 };
   it("attiva quando tutto è a posto", () => {
     expect(extraEasyStatus(ok)).toEqual({ eligible: true, reasons: [] });
   });
   it("non prima della settimana 5", () => {
     expect(extraEasyStatus({ ...ok, weekIndex: 4 }).eligible).toBe(false);
+  });
+  it("mai in scarico, mezza e tapering (9, 11, 14, 15)", () => {
+    for (const w of [9, 11, 14, 15]) expect(extraEasyStatus({ ...ok, weekIndex: w }).eligible, `sett. ${w}`).toBe(false);
+    for (const w of [5, 6, 7, 8, 10, 12, 13]) expect(extraEasyStatus({ ...ok, weekIndex: w }).eligible, `sett. ${w}`).toBe(true);
   });
   it("non con la corsa sospesa (R3)", () => {
     expect(extraEasyStatus({ ...ok, stopActive: true }).reasons.join(" ")).toMatch(/R3/);
@@ -206,6 +210,6 @@ describe("R8 easy facoltativa del mercoledì", () => {
     expect(extraEasyStatus({ ...ok, weekIndex: 3, stopActive: true }).reasons).toHaveLength(2);
   });
   it("la seduta è facoltativa, easy, nello stesso giorno", () => {
-    expect(extraEasySession("mer")).toMatchObject({ kind: "easy", optional: true, weekday: "mer", durationMin: 35 });
+    expect(extraEasySession("ven")).toMatchObject({ kind: "easy", optional: true, weekday: "ven", durationMin: 35 });
   });
 });

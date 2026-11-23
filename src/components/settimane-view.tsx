@@ -76,7 +76,7 @@ export function SettimaneView() {
                       </button>
                       {WEEKDAYS.map((d) => {
                         const st = v.summary.statuses.find((x) => x.session.weekday === d);
-                        // Settimana della gara: niente palestra lunedì e venerdì → cella vuota.
+                        // Settimana della gara: niente palestra lunedì e mercoledì → cella vuota.
                         if (!st) return <div key={d} aria-hidden className="min-h-[3.6rem]" />;
                         const s = st.session;
                         const brief = sessionBrief(s);

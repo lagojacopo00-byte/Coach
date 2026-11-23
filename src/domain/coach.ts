@@ -50,7 +50,7 @@ export interface EffectiveWeek {
 }
 
 /** Applica gli override deterministici R3 (stop) e R2 (qualità → easy) a una settimana. */
-/** Valuta R8 (easy facoltativa del mercoledì) per una settimana, alla data `today`. */
+/** Valuta R8 (easy facoltativa del venerdì) per una settimana, alla data `today`. */
 export function extraEasyReport(base: Week, state: AppState, today: IsoDate): ReturnType<typeof extraEasyStatus> {
   const pace = easyPaceOf(state.profile);
   return extraEasyStatus({
@@ -66,7 +66,7 @@ export function extraEasyReport(base: Week, state: AppState, today: IsoDate): Re
 
 /**
  * Applica gli override deterministici: R3 (stop), R2 (qualità → easy) e, se è data `today`,
- * R8 (easy facoltativa del mercoledì). Senza `today` R8 non si applica.
+ * R8 (easy facoltativa del venerdì). Senza `today` R8 non si applica.
  */
 export function effectiveWeek(base: Week, state: AppState, today?: IsoDate): EffectiveWeek {
   const checkIns = allCheckIns(state);
@@ -82,7 +82,7 @@ export function effectiveWeek(base: Week, state: AppState, today?: IsoDate): Eff
   const sessions = base.sessions.map((session) => {
     const date = dateOfWeekday(base, session.weekday);
     const alreadyRun = state.runs.some((r) => r.date === date);
-    if (extra?.eligible && session.kind === "rest" && session.weekday === "mer") {
+    if (extra?.eligible && session.kind === "rest" && session.weekday === "ven") {
       const replacement = extraEasySession(session.weekday);
       adjustments.push({
         rule: "R8",

@@ -4,11 +4,11 @@ import { CHECKLIST_SEED, dueSoon } from "./checklist.seed";
 import { diffDays } from "./week";
 
 describe("profile / onboarding", () => {
-  it("default: sub 4h a 5:41/km, mar/gio/dom + lun/ven", () => {
+  it("default: sub 4h a 5:41/km, mar/gio/dom + lun/mer", () => {
     const p = defaultProfile();
     expect(p.targetPaceSecPerKm).toBe(341);
     expect(p.runDays).toEqual(["mar", "gio", "dom"]);
-    expect(p.gymDays).toEqual(["lun", "ven"]);
+    expect(p.gymDays).toEqual(["lun", "mer"]);
     expect(p.raceDate).toBe("2027-03-14");
   });
   it("validazione", () => {

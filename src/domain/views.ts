@@ -84,7 +84,7 @@ export interface TodayView {
   todaySession?: EffectiveWeek["week"]["sessions"][number];
   adjusted: boolean;
   advices: Advice[];
-  /** Mercoledì: perché l'easy facoltativa non è attiva (se non lo è). */
+  /** Venerdì: perché l'easy facoltativa non è attiva (se non lo è). */
   extraEasyNote?: string;
 }
 
@@ -102,7 +102,7 @@ export function todayView(state: AppState, today: IsoDate): TodayView {
     todaySession,
     adjusted: wv?.effective.adjustments.some((a) => a.weekday === wd && a.rule !== "R8") ?? false,
     extraEasyNote:
-      week && wd === "mer" && week.index >= 5 && state.extraEasyOff !== true && todaySession?.kind === "rest"
+      week && wd === "ven" && week.index >= 5 && state.extraEasyOff !== true && todaySession?.kind === "rest"
         ? extraEasyReport(week, state, today).reasons.join(" ")
         : undefined,
     advices: [...globalAdvice(state, today), ...(wv?.advices.filter((a) => a.rule === "R2") ?? [])],

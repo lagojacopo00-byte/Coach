@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { updateState } from "../data/store";
-import { lastSets, suggestNext, type Exercise, type GymEntry, type GymLog, type GymSet, type Workout } from "../domain/gym";
+import { effectiveSets, gymContext, gymWeekNotes, lastSets, suggestNext, type Exercise, type GymEntry, type GymLog, type GymSet, type GymWeekContext, type Workout } from "../domain/gym";
 import { shortDate } from "../domain/guidance";
 import { saveGymLog, type AppState } from "../domain/state";
 import type { IsoDate } from "../domain/types";
+import { weekForDate } from "../domain/week";
 import { btnPrimary, btnSecondary, Card, Field, inputCls } from "./ui";
 
 type Row = { w: string; r: string };
@@ -13,12 +14,12 @@ type Row = { w: string; r: string };
 const num = (v: string): number => Number(v.trim().replace(",", "."));
 const kgText = (n: number): string => String(n).replace(".", ",");
 
-function initialRows(ex: Exercise, state: AppState, date: IsoDate, existing?: GymEntry): Row[] {
+function initialRows(ex: Exercise, state: AppState, date: IsoDate, ctx: GymWeekContext, existing?: GymEntry): Row[] {
   if (existing) return existing.sets.map((s) => ({ w: s.weightKg ? kgText(s.weightKg) : "", r: String(s.reps) }));
   const last = lastSets(state.gymLogs, ex.id, date);
   const sug = suggestNext(ex, last?.sets);
   const w = sug ? kgText(sug.weightKg) : "";
-  return Array.from({ length: ex.sets }, () => ({ w: sug && sug.weightKg > 0 ? w : "", r: "" }));
+  return Array.from({ length: effectiveSets(ex, ctx) }, () => ({ w: sug && sug.weightKg > 0 ? w : "", r: "" }));
 }
 
 /** Registra una seduta di palestra: pesi e ripetizioni per serie, con ultima volta e suggerimento. */
@@ -36,8 +37,10 @@ export function GymLogForm({
   onCancel: () => void;
 }) {
   const existing = state.gymLogs.find((l) => l.date === date && l.workoutId === workout.id);
+  const ctx = gymContext(weekForDate(date));
+  const notes_ = gymWeekNotes(ctx);
   const [rows, setRows] = useState<Record<string, Row[]>>(() =>
-    Object.fromEntries(workout.exercises.map((ex) => [ex.id, initialRows(ex, state, date, existing?.entries.find((e) => e.exerciseId === ex.id))])),
+    Object.fromEntries(workout.exercises.map((ex) => [ex.id, initialRows(ex, state, date, ctx, existing?.entries.find((e) => e.exerciseId === ex.id))])),
   );
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [error, setError] = useState<string>();
@@ -71,6 +74,9 @@ export function GymLogForm({
 
   return (
     <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save(); }}>
+      {notes_.map((n) => (
+        <p key={n} className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm dark:border-sky-900 dark:bg-sky-950/40">{n}</p>
+      ))}
       {workout.exercises.map((ex) => {
         const last = lastSets(state.gymLogs, ex.id, date);
         const sug = suggestNext(ex, last?.sets);
@@ -78,7 +84,7 @@ export function GymLogForm({
           <Card key={ex.id} className="!p-3">
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="font-semibold">{ex.name}</h3>
-              <span className="shrink-0 text-sm text-zinc-500">{ex.sets} × {ex.repMin === ex.repMax ? ex.repMin : `${ex.repMin}–${ex.repMax}`}</span>
+              <span className="shrink-0 text-sm text-zinc-500">{effectiveSets(ex, ctx)} × {ex.repMin === ex.repMax ? ex.repMin : `${ex.repMin}–${ex.repMax}`}</span>
             </div>
             {ex.note ? <p className="text-xs text-zinc-500">{ex.note}</p> : null}
             {last ? (

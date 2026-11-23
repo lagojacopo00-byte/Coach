@@ -301,14 +301,14 @@ function ExtraEasy({ state }: { state: AppState }) {
   const on = state.extraEasyOff !== true;
   return (
     <>
-      <H2>Easy facoltativa del mercoledì</H2>
+      <H2>Easy facoltativa del venerdì</H2>
       <Card>
         <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-0.5 h-6 w-6 shrink-0" checked={on} onChange={() => updateState((s) => ({ ...s, extraEasyOff: on ? true : undefined }))} />
           <span>
-            <span className="font-medium">Proponi una easy di 35&apos; il mercoledì</span>
+            <span className="font-medium">Proponi una easy di 35&apos; il venerdì</span>
             <span className="mt-1 block text-sm text-zinc-600 dark:text-zinc-400">
-              Dalla settimana 5 (fine dicembre), solo se negli ultimi giorni non hai dolore a tibie o polpacci (3/10 o più), non hai avuto gambe pesanti e i km restano entro il +10%. Se non è il momento, il mercoledì resta riposo o bici.
+              Dalla settimana 5 (fine dicembre), solo se negli ultimi giorni non hai dolore a tibie o polpacci (3/10 o più), non hai avuto gambe pesanti e i km restano entro il +10%. Non compare nelle settimane di scarico, della mezza e delle ultime due prima della gara. Se non è il momento, il venerdì resta riposo.
             </span>
           </span>
         </label>

@@ -34,28 +34,28 @@ const DELOAD_WEEKS = [4, 9];
 const GYM_LUN: Session = {
   weekday: "lun",
   kind: "gym",
-  description: "Palestra full body",
+  description: "Palestra full body A: squat, chin-up zavorrati, panca. Prevenzione: calf raise, tibialis raise",
 };
-const GYM_VEN: Session = {
-  weekday: "ven",
+const GYM_MER: Session = {
+  weekday: "mer",
   kind: "gym",
-  description:
-    "Palestra full body, gambe leggere (domenica c'è il lungo). Prevenzione: calf raise eccentrici 3×15, tibialis raise 3×20, single-leg RDL 3×8",
+  description: "Palestra full body B: military, stacco a gambe tese, bulgari, tirata. Prevenzione: calf raise (soleo), tibialis raise",
 };
 const REST_MER: Session = { weekday: "mer", kind: "rest", description: "Riposo o bici Z2" };
+const REST_VEN: Session = { weekday: "ven", kind: "rest", description: "Riposo" };
 const REST_SAB: Session = { weekday: "sab", kind: "rest", description: "Riposo" };
 
 type Spec = Omit<Session, "weekday">;
 
-/** Costruisce la settimana: palestra lun/ven, riposo mer/sab, corse mar/gio/dom. */
+/** Costruisce la settimana: palestra lun/mer (gambe spezzate), riposo ven/sab, corse mar/gio/dom. */
 function week(index: number, mar: Spec, gio: Spec, dom: Spec, opts: { gym?: boolean } = {}): Week {
   const gym = opts.gym ?? true;
   const sessions: Session[] = [
     ...(gym ? [GYM_LUN] : []),
     { weekday: "mar", ...mar },
-    REST_MER,
+    gym ? GYM_MER : REST_MER,
     { weekday: "gio", ...gio },
-    ...(gym ? [GYM_VEN] : []),
+    REST_VEN,
     REST_SAB,
     { weekday: "dom", ...dom },
   ];

@@ -168,9 +168,9 @@ describe("coach: un solo avviso R3 per settimana", () => {
 import { extraEasyReport } from "./coach";
 describe("coach: easy facoltativa R8", () => {
   const W5 = PLAN_WEEKS[5]; // 28 dic – 3 gen
-  const wed = (s: AppState, w: typeof W5, today?: string) => effectiveWeek(w, s, today).week.sessions.find((x) => x.weekday === "mer")!;
+  const wed = (s: AppState, w: typeof W5, today?: string) => effectiveWeek(w, s, today).week.sessions.find((x) => x.weekday === "ven")!;
 
-  it("dalla settimana 5, senza segnalazioni, il mercoledì diventa easy facoltativa, con motivo", () => {
+  it("dalla settimana 5, senza segnalazioni, il venerdì diventa easy facoltativa, con motivo", () => {
     const e = effectiveWeek(W5, initialState(), "2026-12-28");
     expect(wed(initialState(), W5, "2026-12-28")).toMatchObject({ kind: "easy", optional: true });
     expect(e.adjustments.map((a) => a.rule)).toEqual(["R8"]);
@@ -178,6 +178,9 @@ describe("coach: easy facoltativa R8", () => {
   });
   it("prima della settimana 5 resta riposo", () => {
     expect(wed(initialState(), PLAN_WEEKS[4], "2026-12-21").kind).toBe("rest");
+    expect(wed(initialState(), PLAN_WEEKS[9], "2027-01-25").kind).toBe("rest"); // scarico
+    expect(wed(initialState(), PLAN_WEEKS[11], "2027-02-08").kind).toBe("rest"); // mezza
+    expect(wed(initialState(), PLAN_WEEKS[15], "2027-03-08").kind).toBe("rest"); // gara
   });
   it("senza data (today) non si applica", () => {
     expect(wed(initialState(), W5).kind).toBe("rest");
@@ -195,15 +198,15 @@ describe("coach: easy facoltativa R8", () => {
   });
   it("non conta come saltata né nei km pianificati", () => {
     const wv = weekView(initialState(), W5, "2027-01-03");
-    const mer = wv.summary.statuses.find((x) => x.session.weekday === "mer")!;
-    expect(mer.state).toBe("optional");
+    const ven = wv.summary.statuses.find((x) => x.session.weekday === "ven")!;
+    expect(ven.state).toBe("optional");
     expect(wv.summary.plannedRuns).toBe(3);
     expect(adviceForWeek(W5, initialState(), "2027-01-03").some((a) => a.rule === "R8")).toBe(false);
   });
   it("se la corri, conta come fatta e nei km fatti", () => {
-    const s = addRun(initialState(), run({ date: "2026-12-30", km: 5 }));
+    const s = addRun(initialState(), run({ date: "2027-01-01", km: 5 }));
     const wv = weekView(s, W5, "2027-01-03");
-    expect(wv.summary.statuses.find((x) => x.session.weekday === "mer")!.state).toBe("done");
+    expect(wv.summary.statuses.find((x) => x.session.weekday === "ven")!.state).toBe("done");
     expect(wv.actualKm).toBe(5);
   });
 });

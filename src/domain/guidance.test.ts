@@ -80,7 +80,7 @@ describe("sessionBrief: cosa devo fare, al volo", () => {
   });
   it("palestra e riposo non hanno dati", () => {
     expect(on(2, "lun").main).toBe("");
-    expect(on(2, "mer").main).toBe("");
+    expect(on(2, "ven").main).toBe("");
   });
   it("ogni seduta di ogni settimana ha un'etichetta breve e i corse hanno un dato", () => {
     for (const w of PLAN_WEEKS)
