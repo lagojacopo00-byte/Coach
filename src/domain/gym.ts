@@ -1,8 +1,8 @@
-import type { IsoDate, Weekday } from "./types";
+import type { IsoDate, Week, Weekday } from "./types";
 
 /** Scheda di palestra: logica pura. La scheda è modificabile dall'utente; questa è quella di partenza. */
 
-export type ExerciseGroup = "forza" | "postura" | "prevenzione";
+export type ExerciseGroup = "forza" | "gambe" | "postura" | "prevenzione";
 
 export interface Exercise {
   /** Stabile: lo storico si aggancia all'id, non al nome. */
@@ -52,9 +52,10 @@ export interface GymLog {
 const ex = (e: Exercise): Exercise => e;
 
 /**
- * Scheda di partenza (HANDOFF §2/§4): full body 2×/settimana, forza, postura, gambe/glutei, spalle/schiena,
- * con la prevenzione tibie/polpacci. Venerdì gambe leggere: niente gambe pesanti nei 2 giorni prima del lungo.
- * È una proposta: nomi, serie e range si cambiano dall'app.
+ * Scheda concordata con Jacopo (23/11/2026): due full body con le gambe spezzate, così nessun giorno è un
+ * "leg day". A il lunedì (squat leggero prima della qualità del martedì), B il mercoledì (stacchi e bulgari:
+ * dopo la qualità, con solo un easy il giorno dopo e il lungo 4 giorni più avanti).
+ * Prevenzione tibie/polpacci in fondo a entrambi. Nomi, serie e range si cambiano dall'app.
  */
 export function defaultGymPlan(): Workout[] {
   return [
@@ -62,35 +63,71 @@ export function defaultGymPlan(): Workout[] {
       id: "A",
       name: "Full body A",
       weekday: "lun",
-      focus: "Forza gambe e glutei, spinta e trazione",
+      focus: "Squat, trazione verticale (chin-up), panca",
       exercises: [
-        ex({ id: "squat", name: "Squat", sets: 3, repMin: 5, repMax: 8, incrementKg: 5, group: "forza" }),
-        ex({ id: "panca", name: "Panca piana", sets: 3, repMin: 6, repMax: 10, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "rematore", name: "Rematore con bilanciere", sets: 3, repMin: 8, repMax: 10, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "hip-thrust", name: "Hip thrust", sets: 3, repMin: 8, repMax: 12, incrementKg: 5, group: "forza" }),
-        ex({ id: "lento", name: "Lento avanti con manubri", sets: 3, repMin: 8, repMax: 10, incrementKg: 2, group: "forza" }),
-        ex({ id: "calf-tesa", name: "Calf raise eccentrico su gradino (gamba tesa)", sets: 3, repMin: 12, repMax: 15, incrementKg: 2, group: "prevenzione", note: "Scendi lentamente (3 secondi)." }),
+        ex({ id: "squat", name: "Squat", sets: 3, repMin: 5, repMax: 6, incrementKg: 5, group: "gambe", note: "Fermati con 2 ripetizioni di riserva." }),
+        ex({ id: "chin-up", name: "Chin-up zavorrati", sets: 5, repMin: 5, repMax: 8, incrementKg: 2.5, group: "forza", note: "Il peso è la zavorra aggiunta." }),
+        ex({ id: "panca", name: "Panca piana", sets: 3, repMin: 6, repMax: 8, incrementKg: 2.5, group: "forza" }),
+        ex({ id: "alzate-a", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza" }),
+        ex({ id: "calf-tesa", name: "Calf raise in piedi, discesa lenta", sets: 3, repMin: 12, repMax: 15, incrementKg: 2, group: "prevenzione", note: "Gamba tesa; scendi in 3 secondi." }),
         ex({ id: "tibialis-a", name: "Tibialis raise", sets: 3, repMin: 15, repMax: 20, incrementKg: 2.5, group: "prevenzione" }),
       ],
     },
     {
       id: "B",
       name: "Full body B",
-      weekday: "ven",
-      focus: "Gambe leggere (domenica c'è il lungo), schiena e spalle, prevenzione",
+      weekday: "mer",
+      focus: "Military press, stacco a gambe tese, bulgari, tirata orizzontale",
       exercises: [
-        ex({ id: "slrdl", name: "Stacco a una gamba (single-leg RDL)", sets: 3, repMin: 8, repMax: 10, incrementKg: 2, noIncrease: true, group: "prevenzione", note: "Gambe leggere: carico basso, controllo." }),
-        ex({ id: "lat", name: "Lat machine / trazioni", sets: 3, repMin: 6, repMax: 10, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "inclinata", name: "Panca inclinata con manubri", sets: 3, repMin: 8, repMax: 10, incrementKg: 2, group: "forza" }),
-        ex({ id: "pulley", name: "Rematore al cavo", sets: 3, repMin: 10, repMax: 12, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "alzate", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza" }),
-        ex({ id: "face-pull", name: "Face pull", sets: 3, repMin: 12, repMax: 15, incrementKg: 2.5, group: "postura" }),
-        ex({ id: "calf-piegata", name: "Calf raise eccentrico su gradino (gamba piegata)", sets: 3, repMin: 12, repMax: 15, incrementKg: 2, group: "prevenzione", note: "Scendi lentamente (3 secondi)." }),
+        ex({ id: "military", name: "Military press", sets: 4, repMin: 5, repMax: 8, incrementKg: 2.5, group: "forza" }),
+        ex({ id: "rdl", name: "Stacco a gambe tese", sets: 3, repMin: 6, repMax: 8, incrementKg: 5, group: "gambe" }),
+        ex({ id: "bulgari", name: "Affondi bulgari", sets: 3, repMin: 8, repMax: 10, incrementKg: 2, group: "gambe", note: "Per gamba; il peso è il carico totale." }),
+        ex({ id: "tirata", name: "Tirata orizzontale", sets: 3, repMin: 8, repMax: 10, incrementKg: 2.5, group: "forza" }),
+        ex({ id: "alzate-b", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza" }),
+        ex({ id: "calf-piegata", name: "Calf raise a ginocchio piegato (soleo)", sets: 3, repMin: 12, repMax: 15, incrementKg: 2, group: "prevenzione", note: "Ginocchio piegato; scendi in 3 secondi." }),
         ex({ id: "tibialis-b", name: "Tibialis raise", sets: 3, repMin: 15, repMax: 20, incrementKg: 2.5, group: "prevenzione" }),
-        ex({ id: "dead-bug", name: "Dead bug", sets: 3, repMin: 8, repMax: 12, incrementKg: 0, group: "postura", note: "Per lato." }),
       ],
     },
   ];
+}
+
+export interface GymWeekContext {
+  /** Settimana di scarico: una serie in meno per esercizio. */
+  deload: boolean;
+  /** Ultime due settimane prima della gara: gambe dimezzate, parte alta invariata. */
+  taper: boolean;
+  /** Qualità dura il martedì (soglia 2×15', salite 6×2'): lo squat scende a 2 serie. */
+  hardQuality: boolean;
+}
+
+const TAPER_FROM_WEEK = 14;
+
+/** Contesto della settimana di corsa per dosare il lavoro in palestra. */
+export function gymContext(week: Week | undefined): GymWeekContext {
+  if (!week) return { deload: false, taper: false, hardQuality: false };
+  const tue = week.sessions.find((x) => x.weekday === "mar");
+  return {
+    deload: week.deload,
+    taper: week.index >= TAPER_FROM_WEEK,
+    hardQuality: tue !== undefined && (tue.description.includes("2×15") || tue.description.includes("6×2'")),
+  };
+}
+
+/** Serie previste per un esercizio in quella settimana. */
+export function effectiveSets(e: Exercise, c: GymWeekContext): number {
+  let n = e.sets;
+  if (c.hardQuality && e.id === "squat") n = Math.min(n, 2);
+  if (c.taper && e.group === "gambe") n = Math.ceil(n / 2);
+  if (c.deload) n = Math.max(1, n - 1);
+  return n;
+}
+
+export function gymWeekNotes(c: GymWeekContext): string[] {
+  const out: string[] = [];
+  if (c.deload) out.push("Settimana di scarico: una serie in meno per esercizio.");
+  if (c.taper) out.push("Ultime settimane prima della gara: gambe dimezzate, parte alta invariata.");
+  if (c.hardQuality) out.push("Qualità dura martedì: squat a 2 serie.");
+  return out;
 }
 
 /** Controlla la scheda: id unici, nomi, serie e range sensati. Ritorna gli errori (vuoto = ok). */

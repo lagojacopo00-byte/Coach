@@ -244,8 +244,10 @@ export function halfAdvice(timeSec: number): Advice {
 
 /* ------------------------------------------------------------------ R8 */
 
-/** Easy facoltativa del mercoledì: dalla settimana 5 (fine dicembre), solo se le gambe stanno bene. */
+/** Easy facoltativa del venerdì: dalla settimana 5 (fine dicembre), solo se le gambe stanno bene. */
 export const EXTRA_EASY_FROM_WEEK = 5;
+/** Mai nelle settimane di scarico (9), della mezza di prova (11) e di tapering/gara (14, 15). */
+export const EXTRA_EASY_EXCLUDED_WEEKS: readonly number[] = [9, 11, 14, 15];
 export const EXTRA_EASY_MIN = 35;
 const EXTRA_PAIN_LIMIT = 3;
 const EXTRA_PAIN_WINDOW_DAYS = 21;
@@ -277,6 +279,7 @@ const daysBetween = (from: IsoDate, to: IsoDate): number =>
 export function extraEasyStatus(i: ExtraEasyInput): ExtraEasyStatus {
   const reasons: string[] = [];
   if (i.weekIndex < EXTRA_EASY_FROM_WEEK) reasons.push("Parte dalla settimana 5 (fine dicembre).");
+  else if (EXTRA_EASY_EXCLUDED_WEEKS.includes(i.weekIndex)) reasons.push("Settimana di scarico, della mezza o di tapering: niente corsa in più.");
   if (i.stopActive) reasons.push("La corsa è sospesa per dolore alla tibia (R3).");
   const recent = (days: number) => i.checkIns.filter((c) => c.date <= i.today && daysBetween(c.date, i.today) < days);
   if (recent(EXTRA_PAIN_WINDOW_DAYS).some((c) => (c.painLocation === "tibia" || c.painLocation === "polpaccio") && c.pain >= EXTRA_PAIN_LIMIT))

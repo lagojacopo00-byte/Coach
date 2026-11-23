@@ -67,11 +67,11 @@ Lettura onesta: dalla mezza la previsione "a freddo" è 4h15–4h20. Il sub 4 è
 ## 4. Piano
 
 ### Settimana tipo
-- **Lun** – palestra full body
+- **Lun** – palestra full body A (gambe: squat leggero)
 - **Mar** – corsa di qualità (salite o soglia)
-- **Mer** – riposo o bici Z2
+- **Mer** – palestra full body B (gambe: stacco a gambe tese + bulgari)
 - **Gio** – corsa easy
-- **Ven** – palestra full body, gambe leggere (domenica c'è il lungo)
+- **Ven** – riposo (dalla sett. 5 può comparire una easy facoltativa di 35')
 - **Sab** – riposo
 - **Dom** – lungo
 
@@ -111,11 +111,16 @@ Lettura onesta: dalla mezza la previsione "a freddo" è 4h15–4h20. Il sub 4 è
 | 14 | 1–7 mar | 3×3 km a RM (rec. 3') | 45' easy | 20 km con 10 a RM |
 | 15 | 8–14 mar | 40' con 3 km a RM | 25' + 4 allunghi | MARATONA |
 
-### Prevenzione tibie/polpacci (da mostrare nei giorni di palestra)
-- Calf raise eccentrici su gradino 3×15 (a gamba tesa e a gamba piegata)
-- Tibialis raise 3×20
-- Single-leg RDL 3×8
-- Niente gambe pesanti nei 2 giorni prima del lungo
+### Scheda palestra (decisa il 23/11/2026: due full body, gambe spezzate)
+**A – lunedì:** squat 3×5–6 (2 ripetizioni di riserva) · chin-up zavorrati 5×5–8 · panca piana 3×6–8 · alzate laterali 3×12–15 · calf raise in piedi (gamba tesa, discesa lenta) 3×12–15 · tibialis raise 3×15–20
+
+**B – mercoledì:** military press 4×5–8 · stacco a gambe tese 3×6–8 · affondi bulgari 3×8–10 per gamba · tirata orizzontale 3×8–10 · alzate laterali 3×12–15 · calf raise a ginocchio piegato (soleo) 3×12–15 · tibialis raise 3×15–20
+
+Perché così: niente leg day unico (giorni a pezzi); lo squat leggero il lunedì (il martedì c'è la qualità), stacchi e bulgari il mercoledì (dopo la qualità, giovedì solo easy, lungo 4 giorni dopo). Progressione: doppia progressione, si sale di peso solo quando tutte le serie arrivano al massimo delle ripetizioni.
+
+Aggiustamenti: settimane di scarico (4 e 9) una serie in meno per esercizio; settimane 14–15 gambe dimezzate; qualità dura il martedì (sett. 10 e 13) squat a 2 serie.
+
+Prevenzione tibie/polpacci: calf raise a gamba tesa e a ginocchio piegato, tibialis raise, glutei e anche con stacchi e bulgari. Niente salti o pliometria finché le tibie non reggono. Dolore puntiforme sull'osso: stop e professionista.
 
 ---
 
@@ -154,7 +159,7 @@ Lettura onesta: dalla mezza la previsione "a freddo" è 4h15–4h20. Il sub 4 è
 - Km a settimana nelle ultime 4 settimane
 - Dolore alle tibie oggi (0–10), puntiforme o diffuso
 - Scarpe usate e km
-- Giorni fissi (default: corsa Mar/Gio/Dom, palestra Lun/Ven)
+- Giorni fissi (default: corsa Mar/Gio/Dom, palestra Lun/Mer)
 
 ---
 

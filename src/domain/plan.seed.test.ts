@@ -77,10 +77,10 @@ describe("plan.seed", () => {
     }
   });
 
-  it("palestra lun/ven in tutte le settimane tranne quella della gara", () => {
+  it("palestra lun/mer in tutte le settimane tranne quella della gara", () => {
     for (const w of PLAN_WEEKS) {
       const gym = w.sessions.filter((s) => s.kind === "gym").map((s) => s.weekday);
-      expect(gym).toEqual(w.index === 15 ? [] : ["lun", "ven"]);
+      expect(gym).toEqual(w.index === 15 ? [] : ["lun", "mer"]);
     }
   });
 

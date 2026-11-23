@@ -32,7 +32,7 @@ export interface AppState {
   halfResult?: HalfRecord;
   /** R3: data fino alla quale una valutazione professionale ha dato il via libera a riprendere. */
   runClearedOn?: IsoDate;
-  /** Se true, la easy facoltativa del mercoledì (R8) è disattivata. */
+  /** Se true, la easy facoltativa del venerdì (R8) è disattivata. */
   extraEasyOff?: boolean;
   /** Scheda di palestra personalizzata; assente = quella di partenza. */
   gymPlan?: Workout[];

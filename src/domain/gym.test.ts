@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   defaultGymPlan,
+  effectiveSets,
   exerciseHistory,
+  gymContext,
+  gymWeekNotes,
   lastSets,
   logVolume,
   suggestNext,
@@ -12,6 +15,7 @@ import {
   type Exercise,
   type GymLog,
 } from "./gym";
+import { PLAN_WEEKS } from "./plan.seed";
 import { gymPlanOf, initialState, parseState, removeGymLog, resetGymPlan, saveGymLog, setGymPlan } from "./state";
 
 const squat: Exercise = { id: "squat", name: "Squat", sets: 3, repMin: 5, repMax: 8, incrementKg: 5 };
@@ -24,26 +28,81 @@ const log = (over: Partial<GymLog> & { sets?: [number, number][] }): GymLog => (
 
 describe("scheda di partenza", () => {
   const plan = defaultGymPlan();
-  it("due allenamenti: A il lunedì, B il venerdì", () => {
-    expect(plan.map((w) => [w.id, w.weekday])).toEqual([["A", "lun"], ["B", "ven"]]);
-    expect(workoutOn(plan, "ven")?.id).toBe("B");
-    expect(workoutOn(plan, "mar")).toBeUndefined();
+  const all = plan.flatMap((w) => w.exercises);
+  it("due full body: A il lunedì, B il mercoledì", () => {
+    expect(plan.map((w) => [w.id, w.weekday])).toEqual([["A", "lun"], ["B", "mer"]]);
+    expect(workoutOn(plan, "mer")?.id).toBe("B");
+    expect(workoutOn(plan, "ven")).toBeUndefined();
   });
-  it("è valida e contiene la prevenzione tibie/polpacci del HANDOFF", () => {
+  it("contiene gli esercizi concordati con le serie e i range chiesti", () => {
+    const get = (id: string) => all.find((e) => e.id === id)!;
+    expect(get("chin-up")).toMatchObject({ sets: 5, repMin: 5, repMax: 8 });
+    expect(get("military")).toMatchObject({ sets: 4, repMin: 5, repMax: 8 });
+    for (const id of ["squat", "rdl", "bulgari", "panca", "tirata", "alzate-a", "alzate-b"]) expect(get(id), id).toBeDefined();
+  });
+  it("le gambe sono spezzate: squat il lunedì, stacco e bulgari il mercoledì", () => {
+    expect(plan[0].exercises.filter((e) => e.group === "gambe").map((e) => e.id)).toEqual(["squat"]);
+    expect(plan[1].exercises.filter((e) => e.group === "gambe").map((e) => e.id)).toEqual(["rdl", "bulgari"]);
+  });
+  it("ogni seduta ha spinta, trazione e prevenzione tibie/polpacci", () => {
+    for (const w of plan) {
+      const names = w.exercises.map((e) => e.name).join("|");
+      expect(names, w.id).toMatch(/Calf raise/);
+      expect(names, w.id).toMatch(/Tibialis raise/);
+    }
+    expect(plan[0].exercises.some((e) => e.id === "panca")).toBe(true);
+    expect(plan[0].exercises.some((e) => e.id === "chin-up")).toBe(true);
+    expect(plan[1].exercises.some((e) => e.id === "military")).toBe(true);
+    expect(plan[1].exercises.some((e) => e.id === "tirata")).toBe(true);
+  });
+  it("calf: gamba tesa il lunedì, ginocchio piegato (soleo) il mercoledì", () => {
+    expect(plan[0].exercises.some((e) => /in piedi/.test(e.name))).toBe(true);
+    expect(plan[1].exercises.some((e) => /ginocchio piegato/.test(e.name))).toBe(true);
+  });
+  it("è valida e gli id sono unici", () => {
     expect(validateGymPlan(plan)).toEqual([]);
-    const names = plan.flatMap((w) => w.exercises.map((e) => e.name)).join("|");
-    expect(names).toMatch(/Calf raise eccentrico/);
-    expect(names).toMatch(/Tibialis raise/);
-    expect(names).toMatch(/single-leg RDL/);
+    expect(new Set(all.map((e) => e.id)).size).toBe(all.length);
   });
-  it("venerdì (gambe leggere): lo stacco a una gamba non si aumenta e non c'è squat", () => {
-    const b = plan[1];
-    expect(b.exercises.find((e) => e.id === "slrdl")?.noIncrease).toBe(true);
-    expect(b.exercises.some((e) => /squat/i.test(e.name))).toBe(false);
+});
+
+describe("dosaggio per settimana", () => {
+  const w = (i: number) => PLAN_WEEKS[i];
+  const sets = (id: string, week: number) => {
+    const e = defaultGymPlan().flatMap((x) => x.exercises).find((x) => x.id === id)!;
+    return effectiveSets(e, gymContext(w(week)));
+  };
+  it("settimana normale: serie piene", () => {
+    expect(sets("squat", 5)).toBe(3);
+    expect(sets("chin-up", 5)).toBe(5);
   });
-  it("id degli esercizi unici in tutta la scheda", () => {
-    const ids = plan.flatMap((w) => w.exercises.map((e) => e.id));
-    expect(new Set(ids).size).toBe(ids.length);
+  it("scarico (4 e 9): una serie in meno ovunque", () => {
+    expect(sets("chin-up", 4)).toBe(4);
+    expect(sets("military", 9)).toBe(3);
+    expect(sets("tibialis-a", 4)).toBe(2);
+  });
+  it("tapering (14): gambe dimezzate, parte alta invariata", () => {
+    expect(sets("rdl", 14)).toBe(2);
+    expect(sets("bulgari", 14)).toBe(2);
+    expect(sets("squat", 14)).toBe(2);
+    expect(sets("chin-up", 14)).toBe(5);
+    expect(sets("military", 14)).toBe(4);
+  });
+  it("qualità dura il martedì (sett. 10 soglia 2×15', sett. 13 salite 6×2'): squat a 2", () => {
+    expect(gymContext(w(10)).hardQuality).toBe(true);
+    expect(gymContext(w(13)).hardQuality).toBe(true);
+    expect(sets("squat", 10)).toBe(2);
+    expect(sets("squat", 13)).toBe(2);
+    expect(sets("rdl", 10)).toBe(3);
+    expect(gymContext(w(5)).hardQuality).toBe(false);
+  });
+  it("non scende mai sotto 1 serie; senza settimana nessun aggiustamento", () => {
+    expect(effectiveSets({ ...defaultGymPlan()[0].exercises[0], sets: 1 }, { deload: true, taper: true, hardQuality: false })).toBe(1);
+    expect(gymContext(undefined)).toEqual({ deload: false, taper: false, hardQuality: false });
+  });
+  it("note leggibili", () => {
+    expect(gymWeekNotes(gymContext(w(4)))[0]).toMatch(/scarico/);
+    expect(gymWeekNotes(gymContext(w(14)))[0]).toMatch(/gambe dimezzate/);
+    expect(gymWeekNotes(gymContext(w(5)))).toEqual([]);
   });
 });
 
@@ -99,7 +158,7 @@ describe("progressione (doppia)", () => {
     expect(s.weightKg).toBe(60);
     expect(s.kind).toBe("repeat");
   });
-  it("noIncrease (gambe leggere del venerdì): mai aumenti", () => {
+  it("noIncrease: mai aumenti", () => {
     const light: Exercise = { ...squat, noIncrease: true, note: "Gambe leggere." };
     const s = suggestNext(light, [{ weightKg: 20, reps: 8 }, { weightKg: 20, reps: 8 }, { weightKg: 20, reps: 8 }])!;
     expect(s).toMatchObject({ kind: "hold", weightKg: 20 });

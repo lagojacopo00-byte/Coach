@@ -1,14 +1,14 @@
 import { RACE_DATE } from "./plan.seed";
 import type { CheckIn, Profile } from "./types";
 
-/** Profilo iniziale (HANDOFF §2/§4): target sub 4h = 5:41/km, corse mar/gio/dom, palestra lun/ven. */
+/** Profilo iniziale (HANDOFF §2/§4): target sub 4h = 5:41/km, corse mar/gio/dom, palestra lun/mer. */
 export function defaultProfile(): Profile {
   return {
     name: "Jacopo",
     targetPaceSecPerKm: 341,
     raceDate: RACE_DATE,
     runDays: ["mar", "gio", "dom"],
-    gymDays: ["lun", "ven"],
+    gymDays: ["lun", "mer"],
   };
 }
 
