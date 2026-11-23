@@ -1,4 +1,5 @@
 import type { IsoDate, Week, Weekday } from "./types";
+import { addDays } from "./week";
 
 /** Scheda di palestra: logica pura. La scheda è modificabile dall'utente; questa è quella di partenza. */
 
@@ -17,6 +18,11 @@ export interface Exercise {
   noIncrease?: boolean;
   group?: ExerciseGroup;
   note?: string;
+  /**
+   * Volume che cresce nel tempo, deciso dal coach: da ognuna di queste settimane del piano si aggiunge
+   * una serie (se ti stai allenando con continuità). Le serie non si impostano a mano.
+   */
+  extraSetFromWeeks?: number[];
 }
 
 export interface Workout {
@@ -67,8 +73,8 @@ export function defaultGymPlan(): Workout[] {
       exercises: [
         ex({ id: "squat", name: "Squat", sets: 3, repMin: 5, repMax: 6, incrementKg: 5, group: "gambe", note: "Fermati con 2 ripetizioni di riserva." }),
         ex({ id: "chin-up", name: "Chin-up zavorrati", sets: 5, repMin: 5, repMax: 8, incrementKg: 2.5, group: "forza", note: "Il peso è la zavorra aggiunta." }),
-        ex({ id: "panca", name: "Panca piana", sets: 3, repMin: 6, repMax: 8, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "alzate-a", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza" }),
+        ex({ id: "panca", name: "Panca piana", sets: 3, repMin: 6, repMax: 8, incrementKg: 2.5, group: "forza", extraSetFromWeeks: [5] }),
+        ex({ id: "alzate-a", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza", extraSetFromWeeks: [5, 10] }),
         ex({ id: "calf-tesa", name: "Calf raise in piedi, discesa lenta", sets: 3, repMin: 12, repMax: 15, incrementKg: 2, group: "prevenzione", note: "Gamba tesa; scendi in 3 secondi." }),
         ex({ id: "tibialis-a", name: "Tibialis raise", sets: 3, repMin: 15, repMax: 20, incrementKg: 2.5, group: "prevenzione" }),
       ],
@@ -82,8 +88,8 @@ export function defaultGymPlan(): Workout[] {
         ex({ id: "military", name: "Military press", sets: 4, repMin: 5, repMax: 8, incrementKg: 2.5, group: "forza" }),
         ex({ id: "rdl", name: "Stacco a gambe tese", sets: 3, repMin: 6, repMax: 8, incrementKg: 5, group: "gambe" }),
         ex({ id: "bulgari", name: "Affondi bulgari", sets: 3, repMin: 8, repMax: 10, incrementKg: 2, group: "gambe", note: "Per gamba; il peso è il carico totale." }),
-        ex({ id: "tirata", name: "Tirata orizzontale", sets: 3, repMin: 8, repMax: 10, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "alzate-b", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza" }),
+        ex({ id: "tirata", name: "Tirata orizzontale", sets: 3, repMin: 8, repMax: 10, incrementKg: 2.5, group: "forza", extraSetFromWeeks: [5] }),
+        ex({ id: "alzate-b", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza", extraSetFromWeeks: [5, 10] }),
         ex({ id: "calf-piegata", name: "Calf raise a ginocchio piegato (soleo)", sets: 3, repMin: 12, repMax: 15, incrementKg: 2, group: "prevenzione", note: "Ginocchio piegato; scendi in 3 secondi." }),
         ex({ id: "tibialis-b", name: "Tibialis raise", sets: 3, repMin: 15, repMax: 20, incrementKg: 2.5, group: "prevenzione" }),
       ],
@@ -92,34 +98,69 @@ export function defaultGymPlan(): Workout[] {
 }
 
 export interface GymWeekContext {
+  /** Indice della settimana del piano (0 se fuori dal piano). */
+  weekIndex: number;
   /** Settimana di scarico: una serie in meno per esercizio. */
   deload: boolean;
   /** Ultime due settimane prima della gara: gambe dimezzate, parte alta invariata. */
   taper: boolean;
   /** Qualità dura il martedì (soglia 2×15', salite 6×2'): lo squat scende a 2 serie. */
   hardQuality: boolean;
+  /** Ti stai allenando con continuità: solo allora il volume può salire. */
+  consistent: boolean;
 }
 
 const TAPER_FROM_WEEK = 14;
+/** Per far salire il volume servono almeno 3 allenamenti registrati nelle ultime 3 settimane. */
+export const CONSISTENCY_MIN_LOGS = 3;
+export const CONSISTENCY_WINDOW_DAYS = 21;
 
-/** Contesto della settimana di corsa per dosare il lavoro in palestra. */
-export function gymContext(week: Week | undefined): GymWeekContext {
-  if (!week) return { deload: false, taper: false, hardQuality: false };
+export function isConsistent(logs: readonly GymLog[], date: IsoDate): boolean {
+  const from = addDays(date, -CONSISTENCY_WINDOW_DAYS);
+  return logs.filter((l) => l.date >= from && l.date < date).length >= CONSISTENCY_MIN_LOGS;
+}
+
+/** Contesto della settimana di corsa (e dei tuoi log) per dosare il lavoro in palestra. */
+export function gymContext(week: Week | undefined, opts?: { logs: readonly GymLog[]; date: IsoDate }): GymWeekContext {
+  const consistent = opts ? isConsistent(opts.logs, opts.date) : false;
+  if (!week) return { weekIndex: 0, deload: false, taper: false, hardQuality: false, consistent };
   const tue = week.sessions.find((x) => x.weekday === "mar");
   return {
+    weekIndex: week.index,
     deload: week.deload,
     taper: week.index >= TAPER_FROM_WEEK,
     hardQuality: tue !== undefined && (tue.description.includes("2×15") || tue.description.includes("6×2'")),
+    consistent,
   };
 }
 
-/** Serie previste per un esercizio in quella settimana. */
+/** Serie aggiunte dal coach per far crescere il volume (0 se non è il momento). */
+export function volumeBonus(e: Exercise, c: GymWeekContext): number {
+  if (!c.consistent || !e.extraSetFromWeeks) return 0;
+  return e.extraSetFromWeeks.filter((w) => w <= c.weekIndex).length;
+}
+
+/**
+ * Serie previste per un esercizio in quella settimana: decide il coach, non l'utente.
+ * Volume che sale (se ti alleni con continuità), poi squat leggero con qualità dura, gambe dimezzate
+ * nel tapering e una serie in meno in scarico.
+ */
 export function effectiveSets(e: Exercise, c: GymWeekContext): number {
-  let n = e.sets;
+  let n = e.sets + volumeBonus(e, c);
   if (c.hardQuality && e.id === "squat") n = Math.min(n, 2);
   if (c.taper && e.group === "gambe") n = Math.ceil(n / 2);
   if (c.deload) n = Math.max(1, n - 1);
   return n;
+}
+
+/** Perché le serie di oggi sono diverse da quelle di base (vuoto se uguali). */
+export function setsChangeNote(e: Exercise, c: GymWeekContext): string | undefined {
+  const eff = effectiveSets(e, c);
+  if (eff === e.sets) return undefined;
+  if (eff > e.sets) return `+${eff - e.sets} serie: volume in crescita`;
+  if (c.deload) return `${eff - e.sets} serie: scarico`;
+  if (c.taper) return `${eff - e.sets} serie: gambe dimezzate prima della gara`;
+  return `${eff - e.sets} serie: qualità dura il martedì`;
 }
 
 export function gymWeekNotes(c: GymWeekContext): string[] {
@@ -128,6 +169,46 @@ export function gymWeekNotes(c: GymWeekContext): string[] {
   if (c.taper) out.push("Ultime settimane prima della gara: gambe dimezzate, parte alta invariata.");
   if (c.hardQuality) out.push("Qualità dura martedì: squat a 2 serie.");
   return out;
+}
+
+/** Bozza dell'allenamento: quello che hai scritto finora, salvato a ogni modifica. */
+export interface GymDraftRow {
+  w: string;
+  r: string;
+  /** Peso scritto a mano su questa serie: non viene sovrascritto dal carico copiato dalle altre. */
+  manual?: boolean;
+}
+
+export interface GymDraft {
+  date: IsoDate;
+  workoutId: string;
+  rows: Record<string, GymDraftRow[]>;
+  notes: string;
+}
+
+const numOf = (v: string): number => (v.trim() === "" ? NaN : Number(v.trim().replace(",", ".")));
+
+/** Dalla bozza all'allenamento: conta solo le serie con ripetizioni valide. Undefined se non c'è nessuna serie fatta. */
+export function draftToLog(draft: GymDraft, workout: Workout): GymLog | undefined {
+  const entries: GymEntry[] = [];
+  for (const ex of workout.exercises) {
+    const sets: GymSet[] = [];
+    for (const row of draft.rows[ex.id] ?? []) {
+      const reps = numOf(row.r);
+      if (!Number.isInteger(reps) || reps < 1) continue;
+      const weightKg = row.w.trim() === "" ? 0 : numOf(row.w);
+      if (!Number.isFinite(weightKg) || weightKg < 0) continue;
+      sets.push({ weightKg, reps });
+    }
+    if (sets.length > 0) entries.push({ exerciseId: ex.id, name: ex.name, sets });
+  }
+  if (entries.length === 0) return undefined;
+  return { id: `gym-${draft.date}-${draft.workoutId}`, date: draft.date, workoutId: draft.workoutId, entries, ...(draft.notes.trim() ? { notes: draft.notes.trim() } : {}) };
+}
+
+/** Scrivi il carico su una serie: si copia sulle altre che non hai scritto a mano. Le ripetizioni restano tue. */
+export function setWeight(rows: readonly GymDraftRow[], index: number, value: string): GymDraftRow[] {
+  return rows.map((row, j) => (j === index ? { ...row, w: value, manual: true } : row.manual ? row : { ...row, w: value }));
 }
 
 /** Controlla la scheda: id unici, nomi, serie e range sensati. Ritorna gli errori (vuoto = ok). */

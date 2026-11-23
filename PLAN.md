@@ -39,6 +39,7 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] R8: easy facoltativa del venerdì dalla sett. 5 (mai in scarico, mezza e ultime due settimane), solo se dolore <3/10 a tibie/polpacci (21 gg), niente gambe pesanti (14 gg), nessuno stop R3 e +10% rispettato
 - [x] Palestra: scheda modificabile, log pesi/ripetizioni, progressione, storico e progressi
 - [x] Scheda palestra concordata: due full body (A lun, B mer), gambe spezzate, prevenzione tibie/polpacci; scarico/tapering/qualità dura dosano le serie
+- [x] Palestra: serie decise dal coach (volume +1 su panca, tirata e alzate dalla sett. 5, solo con continuità), carico copiato su tutte le serie, salvataggio a ogni modifica con ripresa dell'allenamento
 - [ ] Import dati Garmin (serve un export reale per testare il formato)
 
 ## F5 PWA

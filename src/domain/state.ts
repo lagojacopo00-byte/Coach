@@ -1,4 +1,4 @@
-import { defaultGymPlan, validateGymLog, validateGymPlan, type GymLog, type Workout } from "./gym";
+import { defaultGymPlan, draftToLog, validateGymLog, validateGymPlan, type GymDraft, type GymLog, type Workout } from "./gym";
 import { applyRecalculation, recalcFromThresholdTest, type Recalculation, type ThresholdTestInput } from "./rules";
 import { defaultProfile, type OnboardingInput } from "./profile";
 import type { CheckIn, IsoDate, Profile, Run, Skip } from "./types";
@@ -37,6 +37,8 @@ export interface AppState {
   /** Scheda di palestra personalizzata; assente = quella di partenza. */
   gymPlan?: Workout[];
   gymLogs: GymLog[];
+  /** Allenamenti di palestra in corso: salvati a ogni modifica. */
+  gymDrafts: GymDraft[];
 }
 
 export function initialState(): AppState {
@@ -47,6 +49,7 @@ export function initialState(): AppState {
     checkIns: [],
     skips: [],
     gymLogs: [],
+    gymDrafts: [],
     checklistDone: [],
     onboardingDone: false,
     thresholdTests: [],
@@ -156,6 +159,7 @@ export function parseState(raw: unknown): AppState | undefined {
     thresholdTests: Array.isArray(o.thresholdTests) ? o.thresholdTests : [],
     skips: Array.isArray(o.skips) ? o.skips : [],
     gymLogs: Array.isArray(o.gymLogs) ? o.gymLogs : [],
+    gymDrafts: Array.isArray(o.gymDrafts) ? o.gymDrafts : [],
     onboardingDone: o.onboardingDone === true,
   } as AppState;
 }
@@ -191,4 +195,32 @@ export function saveGymLog(s: AppState, log: GymLog): AppState {
 
 export function removeGymLog(s: AppState, id: string): AppState {
   return { ...s, gymLogs: s.gymLogs.filter((l) => l.id !== id) };
+}
+
+const sameDraft = (a: GymDraft, b: GymDraft) => a.date === b.date && a.workoutId === b.workoutId;
+
+/**
+ * Salva a ogni modifica: la bozza (tutto ciò che hai scritto, anche i pesi senza ripetizioni) e l'allenamento
+ * (le serie con ripetizioni), così storico e progressione sono sempre aggiornati. Se togli tutte le ripetizioni
+ * l'allenamento sparisce dallo storico.
+ */
+export function autosaveGym(s: AppState, draft: GymDraft, workout: Workout): AppState {
+  const log = draftToLog(draft, workout);
+  const dropOld = (l: GymLog) => !(l.date === draft.date && l.workoutId === draft.workoutId);
+  const keepDrafts = s.gymDrafts.filter((d) => !sameDraft(d, draft) && d.date >= prunedBefore(draft.date));
+  return {
+    ...s,
+    gymDrafts: [...keepDrafts, draft],
+    gymLogs: log ? [...s.gymLogs.filter(dropOld), log].sort(byDate) : s.gymLogs.filter(dropOld),
+  };
+}
+
+/** Le bozze più vecchie di 14 giorni non servono più. */
+function prunedBefore(date: IsoDate): IsoDate {
+  return new Date(Date.parse(`${date}T00:00:00Z`) - 14 * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Chiudi l'allenamento: la bozza non serve più (i dati restano nello storico). */
+export function finishGymDraft(s: AppState, date: IsoDate, workoutId: string): AppState {
+  return { ...s, gymDrafts: s.gymDrafts.filter((d) => !(d.date === date && d.workoutId === workoutId)) };
 }
