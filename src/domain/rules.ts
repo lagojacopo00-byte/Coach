@@ -241,3 +241,58 @@ export function halfAdvice(timeSec: number): Advice {
     message: `${formatHms(timeSec)} in mezza: proiezione ~${formatHms(e.projectedMarathonSec)}. Invece di forzare, valuta un target di ${formatHms(t.fastSec)}–${formatHms(t.slowSec)}.`,
   };
 }
+
+/* ------------------------------------------------------------------ R8 */
+
+/** Easy facoltativa del mercoledì: dalla settimana 5 (fine dicembre), solo se le gambe stanno bene. */
+export const EXTRA_EASY_FROM_WEEK = 5;
+export const EXTRA_EASY_MIN = 35;
+const EXTRA_PAIN_LIMIT = 3;
+const EXTRA_PAIN_WINDOW_DAYS = 21;
+const EXTRA_HEAVY_WINDOW_DAYS = 14;
+
+export interface ExtraEasyInput {
+  weekIndex: number;
+  today: IsoDate;
+  checkIns: readonly CheckIn[];
+  stopActive: boolean;
+  /** Km pianificati della settimana (senza la facoltativa). */
+  plannedKm: number;
+  /** Km reali dell'ultima settimana normale, se noti. */
+  baseKm?: number;
+  /** Km stimati della facoltativa. */
+  extraKm: number;
+}
+
+export interface ExtraEasyStatus {
+  eligible: boolean;
+  /** Perché non è attiva (vuoto se eligible). */
+  reasons: string[];
+}
+
+const daysBetween = (from: IsoDate, to: IsoDate): number =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+
+/** R8: la quarta corsa si accende solo se non ci sono segnali di allarme su tibie/polpacci e il carico regge. */
+export function extraEasyStatus(i: ExtraEasyInput): ExtraEasyStatus {
+  const reasons: string[] = [];
+  if (i.weekIndex < EXTRA_EASY_FROM_WEEK) reasons.push("Parte dalla settimana 5 (fine dicembre).");
+  if (i.stopActive) reasons.push("La corsa è sospesa per dolore alla tibia (R3).");
+  const recent = (days: number) => i.checkIns.filter((c) => c.date <= i.today && daysBetween(c.date, i.today) < days);
+  if (recent(EXTRA_PAIN_WINDOW_DAYS).some((c) => (c.painLocation === "tibia" || c.painLocation === "polpaccio") && c.pain >= EXTRA_PAIN_LIMIT))
+    reasons.push("Dolore a tibie o polpacci a 3/10 o più nelle ultime 3 settimane.");
+  if (recent(EXTRA_HEAVY_WINDOW_DAYS).some((c) => c.heavyLegs === true)) reasons.push("Gambe pesanti nelle ultime 2 settimane.");
+  if (i.baseKm !== undefined && i.baseKm > 0 && i.plannedKm + i.extraKm > i.baseKm * (1 + MAX_WEEKLY_INCREASE) + 0.05)
+    reasons.push("Con la facoltativa supereresti il +10% di km (R1).");
+  return { eligible: reasons.length === 0, reasons };
+}
+
+export function extraEasySession(weekday: Session["weekday"]): Session {
+  return {
+    weekday,
+    kind: "easy",
+    durationMin: EXTRA_EASY_MIN,
+    optional: true,
+    description: `Easy facoltativa ${EXTRA_EASY_MIN}' in Z2, solo se le gambe stanno bene. Nel dubbio: bici Z2 o riposo.`,
+  };
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adviceForWeek, baseWeeklyKm, easyPaceOf, effectiveWeek, globalAdvice, stopStatus } from "./coach";
+import { weekView } from "./views";
 import { PLAN_WEEKS } from "./plan.seed";
 import { addCheckIn, addRun, clearRunStop, initialState, recordHalf, recordThresholdTest, type AppState } from "./state";
 import type { Run } from "./types";
@@ -161,5 +162,48 @@ describe("coach: un solo avviso R3 per settimana", () => {
     expect(r3[0].title).toMatch(/MAR|GIO|DOM/);
     const today = globalAdvice(s, "2026-12-08").filter((a) => a.rule === "R3");
     expect(today).toHaveLength(1);
+  });
+});
+
+import { extraEasyReport } from "./coach";
+describe("coach: easy facoltativa R8", () => {
+  const W5 = PLAN_WEEKS[5]; // 28 dic – 3 gen
+  const wed = (s: AppState, w: typeof W5, today?: string) => effectiveWeek(w, s, today).week.sessions.find((x) => x.weekday === "mer")!;
+
+  it("dalla settimana 5, senza segnalazioni, il mercoledì diventa easy facoltativa, con motivo", () => {
+    const e = effectiveWeek(W5, initialState(), "2026-12-28");
+    expect(wed(initialState(), W5, "2026-12-28")).toMatchObject({ kind: "easy", optional: true });
+    expect(e.adjustments.map((a) => a.rule)).toEqual(["R8"]);
+    expect(e.adjustments[0].original.kind).toBe("rest");
+  });
+  it("prima della settimana 5 resta riposo", () => {
+    expect(wed(initialState(), PLAN_WEEKS[4], "2026-12-21").kind).toBe("rest");
+  });
+  it("senza data (today) non si applica", () => {
+    expect(wed(initialState(), W5).kind).toBe("rest");
+  });
+  it("si spegne con dolore a 3/10 alla tibia o con lo stop", () => {
+    const s = addCheckIn(initialState(), { date: "2026-12-20", pain: 3, painLocation: "tibia", painType: "diffuso" });
+    expect(wed(s, W5, "2026-12-28").kind).toBe("rest");
+    expect(extraEasyReport(W5, s, "2026-12-28").reasons.join(" ")).toMatch(/Dolore/);
+    const stop = addCheckIn(initialState(), { date: "2026-12-27", pain: 2, painLocation: "tibia", painType: "puntiforme" });
+    expect(wed(stop, W5, "2026-12-28").kind).toBe("rest");
+    expect(extraEasyReport(W5, stop, "2026-12-28").eligible).toBe(false);
+  });
+  it("si può disattivare dal profilo", () => {
+    expect(wed({ ...initialState(), extraEasyOff: true }, W5, "2026-12-28").kind).toBe("rest");
+  });
+  it("non conta come saltata né nei km pianificati", () => {
+    const wv = weekView(initialState(), W5, "2027-01-03");
+    const mer = wv.summary.statuses.find((x) => x.session.weekday === "mer")!;
+    expect(mer.state).toBe("optional");
+    expect(wv.summary.plannedRuns).toBe(3);
+    expect(adviceForWeek(W5, initialState(), "2027-01-03").some((a) => a.rule === "R8")).toBe(false);
+  });
+  it("se la corri, conta come fatta e nei km fatti", () => {
+    const s = addRun(initialState(), run({ date: "2026-12-30", km: 5 }));
+    const wv = weekView(s, W5, "2027-01-03");
+    expect(wv.summary.statuses.find((x) => x.session.weekday === "mer")!.state).toBe("done");
+    expect(wv.actualKm).toBe(5);
   });
 });

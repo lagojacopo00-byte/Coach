@@ -31,6 +31,7 @@ export function ProfiloView() {
           <PageTitle sub="Dati, zone, test fisici e backup">Profilo</PageTitle>
           <StopSection state={state} today={today} />
           <Onboarding key={String(state.onboardingDone)} state={state} today={today} />
+          <ExtraEasy state={state} />
           <Zones state={state} />
           <ThresholdTest state={state} today={today} />
           <HalfTest state={state} today={today} />
@@ -291,6 +292,26 @@ function Tools({ simDate, today }: { simDate?: string; today: string }) {
         <button type="button" className={`${btnDanger} mt-4 w-full`} onClick={() => {
           if (window.confirm("Cancellare TUTTI i dati (corse, check-in, test, checklist)? Fai prima un backup.")) { replaceState(initialState()); setSimDate(undefined); }
         }}>Cancella tutti i dati</button>
+      </Card>
+    </>
+  );
+}
+
+function ExtraEasy({ state }: { state: AppState }) {
+  const on = state.extraEasyOff !== true;
+  return (
+    <>
+      <H2>Easy facoltativa del mercoledì</H2>
+      <Card>
+        <label className="flex items-start gap-3">
+          <input type="checkbox" className="mt-0.5 h-6 w-6 shrink-0" checked={on} onChange={() => updateState((s) => ({ ...s, extraEasyOff: on ? true : undefined }))} />
+          <span>
+            <span className="font-medium">Proponi una easy di 35&apos; il mercoledì</span>
+            <span className="mt-1 block text-sm text-zinc-600 dark:text-zinc-400">
+              Dalla settimana 5 (fine dicembre), solo se negli ultimi giorni non hai dolore a tibie o polpacci (3/10 o più), non hai avuto gambe pesanti e i km restano entro il +10%. Se non è il momento, il mercoledì resta riposo o bici.
+            </span>
+          </span>
+        </label>
       </Card>
     </>
   );

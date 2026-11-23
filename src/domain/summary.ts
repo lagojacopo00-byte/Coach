@@ -45,7 +45,7 @@ export function estimateSessionKm(s: Session, easyPace = DEFAULT_EASY_PACE): num
 }
 
 export function plannedWeekKm(week: Week, easyPace = DEFAULT_EASY_PACE): number {
-  return week.sessions.reduce((sum, s) => sum + estimateSessionKm(s, easyPace), 0);
+  return week.sessions.reduce((sum, s) => sum + (s.optional ? 0 : estimateSessionKm(s, easyPace)), 0);
 }
 
 export function runsInWeek(runs: readonly Run[], week: Week): Run[] {
@@ -62,7 +62,7 @@ export function changePct(previousKm: number, currentKm: number): number | undef
   return ((currentKm - previousKm) / previousKm) * 100;
 }
 
-export type SessionState = "done" | "skipped" | "missed" | "today" | "upcoming";
+export type SessionState = "done" | "skipped" | "missed" | "today" | "upcoming" | "optional";
 
 export interface SessionStatus {
   session: Session;
@@ -102,19 +102,20 @@ export function weekSummary(
     let state: SessionState;
     if (!isRunSession(session)) state = date < today ? "done" : date === today ? "today" : "upcoming";
     else if (run) state = "done";
+    else if (session.optional) state = date === today ? "today" : "optional";
     else if (skip) state = "skipped";
     else if (date < today) state = "missed";
     else if (date === today) state = "today";
     else state = "upcoming";
     return { session, date, state, run, skip };
   });
-  const runSessions = statuses.filter((s) => isRunSession(s.session));
+  const runSessions = statuses.filter((s) => isRunSession(s.session) && !s.session.optional);
   const painRuns = weekRuns.filter((r) => r.pain > 0);
   return {
     plannedKm: plannedWeekKm(week, easyPace),
     actualKm: weekRuns.reduce((sum, r) => sum + r.km, 0),
     plannedRuns: runSessions.length,
-    doneRuns: runSessions.filter((s) => s.state === "done").length,
+    doneRuns: statuses.filter((s) => isRunSession(s.session) && s.state === "done" && !s.session.optional).length,
     statuses,
     extraRuns: weekRuns.filter((r) => !used.has(r.id)),
     maxPain: weekRuns.reduce((m, r) => Math.max(m, r.pain), 0),

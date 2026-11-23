@@ -32,7 +32,7 @@ function DayRow({ status, adjusted, onOpen }: { status: SessionStatus; adjusted:
       >
         <span className={`w-2 shrink-0 rounded-l-xl ${style.bar}`} aria-hidden />
         <span className="flex-1 py-2.5">
-          <span className="block text-xs text-zinc-500">{WEEKDAY_LABEL[session.weekday]} {shortDate(date)}{adjusted ? " · cambiata dal coach" : ""}</span>
+          <span className="block text-xs text-zinc-500">{WEEKDAY_LABEL[session.weekday]} {shortDate(date)}{adjusted ? " · cambiata dal coach" : ""}{session.optional ? " · facoltativa" : ""}</span>
           <span className="block font-semibold">
             {KIND_LABEL[session.kind]}
             {brief.main ? <span className="ml-1.5">{brief.main}</span> : null}
@@ -90,6 +90,9 @@ export function OggiView() {
                 <p className="mt-1 text-sm text-zinc-500">{v.status === "before" ? "Il piano parte lunedì 23 novembre." : "Il piano è concluso."}</p>
               </Card>
             )}
+            {v.extraEasyNote ? (
+              <p className="mt-2 px-1 text-sm text-zinc-600 dark:text-zinc-400">Easy facoltativa non attiva: {v.extraEasyNote}</p>
+            ) : null}
             {next ? (
               <p className="mt-2 px-1 text-sm text-zinc-600 dark:text-zinc-400">
                 Prossima corsa: <span className="font-semibold">{WEEKDAY_LABEL[next.session.weekday]} {shortDate(next.date)}</span> · {KIND_LABEL[next.session.kind]} {sessionBrief(next.session).main}
@@ -112,7 +115,7 @@ export function OggiView() {
                 </H2>
                 <ul className="space-y-2">
                   {statuses.map((s) => (
-                    <DayRow key={s.date} status={s} adjusted={Boolean(adjustmentOn(s.date))} onOpen={() => setOpen(s.date)} />
+                    <DayRow key={s.date} status={s} adjusted={adjustmentOn(s.date) !== undefined && adjustmentOn(s.date)?.rule !== "R8"} onOpen={() => setOpen(s.date)} />
                   ))}
                 </ul>
                 <p className="mt-3 text-center text-sm text-zinc-500">

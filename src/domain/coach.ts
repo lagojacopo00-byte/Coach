@@ -2,6 +2,10 @@ import { PLAN_WEEKS } from "./plan.seed";
 import {
   bikeReplacement,
   easyReplacement,
+  EXTRA_EASY_FROM_WEEK,
+  EXTRA_EASY_MIN,
+  extraEasySession,
+  extraEasyStatus,
   gelAdvice,
   halfAdvice,
   HALF_DATE,
@@ -46,15 +50,51 @@ export interface EffectiveWeek {
 }
 
 /** Applica gli override deterministici R3 (stop) e R2 (qualità → easy) a una settimana. */
-export function effectiveWeek(base: Week, state: AppState): EffectiveWeek {
+/** Valuta R8 (easy facoltativa del mercoledì) per una settimana, alla data `today`. */
+export function extraEasyReport(base: Week, state: AppState, today: IsoDate): ReturnType<typeof extraEasyStatus> {
+  const pace = easyPaceOf(state.profile);
+  return extraEasyStatus({
+    weekIndex: base.index,
+    today,
+    checkIns: allCheckIns(state),
+    stopActive: stopStatus(state).active,
+    plannedKm: plannedWeekKm(base, pace),
+    baseKm: baseWeeklyKm(state, base),
+    extraKm: (EXTRA_EASY_MIN * 60) / pace,
+  });
+}
+
+/**
+ * Applica gli override deterministici: R3 (stop), R2 (qualità → easy) e, se è data `today`,
+ * R8 (easy facoltativa del mercoledì). Senza `today` R8 non si applica.
+ */
+export function effectiveWeek(base: Week, state: AppState, today?: IsoDate): EffectiveWeek {
   const checkIns = allCheckIns(state);
   const checkInOn = (d: IsoDate): CheckIn | undefined => checkIns.find((c) => c.date === d);
   const stop = stopStatus(state);
   const adjustments: Adjustment[] = [];
 
+  const extra =
+    today !== undefined && base.index >= EXTRA_EASY_FROM_WEEK && state.extraEasyOff !== true
+      ? extraEasyReport(base, state, today)
+      : undefined;
+
   const sessions = base.sessions.map((session) => {
     const date = dateOfWeekday(base, session.weekday);
     const alreadyRun = state.runs.some((r) => r.date === date);
+    if (extra?.eligible && session.kind === "rest" && session.weekday === "mer") {
+      const replacement = extraEasySession(session.weekday);
+      adjustments.push({
+        rule: "R8",
+        weekIndex: base.index,
+        weekday: session.weekday,
+        date,
+        original: session,
+        replacement,
+        reason: "Easy facoltativa: nessun dolore a tibie/polpacci, gambe ok e carico entro il +10%.",
+      });
+      return replacement;
+    }
     if (alreadyRun || !isRunSession(session)) return session;
 
     if (stop.active && stop.since !== undefined && date >= stop.since) {
@@ -103,7 +143,8 @@ export function baseWeeklyKm(state: AppState, week: Week, weeks: readonly Week[]
 
 /** Messaggi del coach per una settimana (R1, R4, R6 e avvisi sui test). */
 export function adviceForWeek(base: Week, state: AppState, today: IsoDate): Advice[] {
-  const { week, adjustments } = effectiveWeek(base, state);
+  const { week, adjustments: all } = effectiveWeek(base, state, today);
+  const adjustments = all.filter((a) => a.rule !== "R8");
   const pace = easyPaceOf(state.profile);
   const out: Advice[] = [];
 
