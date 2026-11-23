@@ -172,3 +172,40 @@ describe("R7 mezza del 14/02", () => {
     expect(formatHms(3661)).toBe("1:01:01");
   });
 });
+
+import { extraEasySession, extraEasyStatus, type ExtraEasyInput } from "./rules";
+describe("R8 easy facoltativa del mercoledì", () => {
+  const ok: ExtraEasyInput = { weekIndex: 5, today: "2026-12-28", checkIns: [], stopActive: false, plannedKm: 30, baseKm: 36, extraKm: 5 };
+  it("attiva quando tutto è a posto", () => {
+    expect(extraEasyStatus(ok)).toEqual({ eligible: true, reasons: [] });
+  });
+  it("non prima della settimana 5", () => {
+    expect(extraEasyStatus({ ...ok, weekIndex: 4 }).eligible).toBe(false);
+  });
+  it("non con la corsa sospesa (R3)", () => {
+    expect(extraEasyStatus({ ...ok, stopActive: true }).reasons.join(" ")).toMatch(/R3/);
+  });
+  it("non con dolore ≥3 a tibie/polpacci nelle ultime 3 settimane, sì se è più vecchio o altrove", () => {
+    const pain = (date: string, loc: "tibia" | "polpaccio" | "altro", p: number) => ({ date, pain: p, painLocation: loc });
+    expect(extraEasyStatus({ ...ok, checkIns: [pain("2026-12-10", "tibia", 3)] }).eligible).toBe(false);
+    expect(extraEasyStatus({ ...ok, checkIns: [pain("2026-12-10", "polpaccio", 4)] }).eligible).toBe(false);
+    expect(extraEasyStatus({ ...ok, checkIns: [pain("2026-12-10", "tibia", 2)] }).eligible).toBe(true);
+    expect(extraEasyStatus({ ...ok, checkIns: [pain("2026-12-10", "altro", 8)] }).eligible).toBe(true);
+    expect(extraEasyStatus({ ...ok, checkIns: [pain("2026-11-30", "tibia", 5)] }).eligible).toBe(true); // 28 giorni fa
+  });
+  it("non con gambe pesanti nelle ultime 2 settimane", () => {
+    expect(extraEasyStatus({ ...ok, checkIns: [{ date: "2026-12-20", pain: 0, heavyLegs: true }] }).eligible).toBe(false);
+    expect(extraEasyStatus({ ...ok, checkIns: [{ date: "2026-12-05", pain: 0, heavyLegs: true }] }).eligible).toBe(true);
+  });
+  it("non se supera il +10% di km", () => {
+    expect(extraEasyStatus({ ...ok, plannedKm: 30, baseKm: 30, extraKm: 5 }).reasons.join(" ")).toMatch(/\+10%/);
+    expect(extraEasyStatus({ ...ok, plannedKm: 28, baseKm: 33, extraKm: 5 }).eligible).toBe(true);
+    expect(extraEasyStatus({ ...ok, baseKm: undefined }).eligible).toBe(true);
+  });
+  it("elenca tutti i motivi insieme", () => {
+    expect(extraEasyStatus({ ...ok, weekIndex: 3, stopActive: true }).reasons).toHaveLength(2);
+  });
+  it("la seduta è facoltativa, easy, nello stesso giorno", () => {
+    expect(extraEasySession("mer")).toMatchObject({ kind: "easy", optional: true, weekday: "mer", durationMin: 35 });
+  });
+});

@@ -114,7 +114,7 @@ export function sessionBrief(s: Session): SessionBrief {
   switch (s.kind) {
     case "easy": {
       const all = /(\d+) allunghi/.exec(s.description);
-      return { main: min, sub: all ? `+${all[1]} allunghi` : undefined };
+      return { main: min, sub: s.optional ? "facoltativa" : all ? `+${all[1]} allunghi` : undefined };
     }
     case "hills": {
       const reps = /Salite\s+([^.\s]+)/.exec(s.description);

@@ -1,4 +1,4 @@
-import { adviceForWeek, easyPaceOf, effectiveWeek, globalAdvice, type EffectiveWeek } from "./coach";
+import { adviceForWeek, easyPaceOf, effectiveWeek, extraEasyReport, globalAdvice, type EffectiveWeek } from "./coach";
 import { CHECKLIST_SEED, type ChecklistItem } from "./checklist.seed";
 import { PLAN_WEEKS } from "./plan.seed";
 import type { AppState } from "./state";
@@ -27,7 +27,7 @@ export interface WeekView {
 }
 
 export function weekView(state: AppState, week: Week, today: IsoDate): WeekView {
-  const effective = effectiveWeek(week, state);
+  const effective = effectiveWeek(week, state, today);
   const pace = easyPaceOf(state.profile);
   return {
     effective,
@@ -84,6 +84,8 @@ export interface TodayView {
   todaySession?: EffectiveWeek["week"]["sessions"][number];
   adjusted: boolean;
   advices: Advice[];
+  /** Mercoledì: perché l'easy facoltativa non è attiva (se non lo è). */
+  extraEasyNote?: string;
 }
 
 export function todayView(state: AppState, today: IsoDate): TodayView {
@@ -98,7 +100,11 @@ export function todayView(state: AppState, today: IsoDate): TodayView {
     daysToRace: daysToRace(today, state.profile.raceDate),
     weekView: wv,
     todaySession,
-    adjusted: wv?.effective.adjustments.some((a) => a.weekday === wd) ?? false,
+    adjusted: wv?.effective.adjustments.some((a) => a.weekday === wd && a.rule !== "R8") ?? false,
+    extraEasyNote:
+      week && wd === "mer" && week.index >= 5 && state.extraEasyOff !== true && todaySession?.kind === "rest"
+        ? extraEasyReport(week, state, today).reasons.join(" ")
+        : undefined,
     advices: [...globalAdvice(state, today), ...(wv?.advices.filter((a) => a.rule === "R2") ?? [])],
   };
 }
@@ -117,10 +123,10 @@ export interface TrendPoint {
 }
 
 /** Andamento settimana per settimana: carico (km) e lungo, pianificato vs fatto. */
-export function trendSeries(state: AppState, weeks: readonly Week[] = PLAN_WEEKS): TrendPoint[] {
+export function trendSeries(state: AppState, weeks: readonly Week[] = PLAN_WEEKS, today?: IsoDate): TrendPoint[] {
   const pace = easyPaceOf(state.profile);
   return weeks.map((w) => {
-    const eff = effectiveWeek(w, state).week;
+    const eff = effectiveWeek(w, state, today).week;
     const runs = runsInWeek(state.runs, w);
     return {
       index: w.index,
@@ -144,10 +150,10 @@ export interface NextRun {
 export function nextRunSession(state: AppState, today: IsoDate): NextRun | undefined {
   const start = weekForDate(today)?.index ?? (today < PLAN_WEEKS[0].start ? 0 : PLAN_WEEKS.length);
   for (let i = start; i < PLAN_WEEKS.length; i++) {
-    const eff = effectiveWeek(PLAN_WEEKS[i], state).week;
+    const eff = effectiveWeek(PLAN_WEEKS[i], state, today).week;
     for (const s of eff.sessions) {
       const date = dateOfWeekday(eff, s.weekday);
-      if (date > today && isRunSession(s)) return { session: s, date, weekIndex: i };
+      if (date > today && isRunSession(s) && !s.optional) return { session: s, date, weekIndex: i };
     }
   }
   return undefined;

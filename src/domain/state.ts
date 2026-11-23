@@ -1,3 +1,4 @@
+import { defaultGymPlan, validateGymLog, validateGymPlan, type GymLog, type Workout } from "./gym";
 import { applyRecalculation, recalcFromThresholdTest, type Recalculation, type ThresholdTestInput } from "./rules";
 import { defaultProfile, type OnboardingInput } from "./profile";
 import type { CheckIn, IsoDate, Profile, Run, Skip } from "./types";
@@ -31,6 +32,11 @@ export interface AppState {
   halfResult?: HalfRecord;
   /** R3: data fino alla quale una valutazione professionale ha dato il via libera a riprendere. */
   runClearedOn?: IsoDate;
+  /** Se true, la easy facoltativa del mercoledì (R8) è disattivata. */
+  extraEasyOff?: boolean;
+  /** Scheda di palestra personalizzata; assente = quella di partenza. */
+  gymPlan?: Workout[];
+  gymLogs: GymLog[];
 }
 
 export function initialState(): AppState {
@@ -40,6 +46,7 @@ export function initialState(): AppState {
     runs: [],
     checkIns: [],
     skips: [],
+    gymLogs: [],
     checklistDone: [],
     onboardingDone: false,
     thresholdTests: [],
@@ -148,10 +155,40 @@ export function parseState(raw: unknown): AppState | undefined {
     profile: { ...base.profile, ...o.profile },
     thresholdTests: Array.isArray(o.thresholdTests) ? o.thresholdTests : [],
     skips: Array.isArray(o.skips) ? o.skips : [],
+    gymLogs: Array.isArray(o.gymLogs) ? o.gymLogs : [],
     onboardingDone: o.onboardingDone === true,
   } as AppState;
 }
 
 export function applyOnboardingToState(s: AppState, i: OnboardingInput, profile: Profile): AppState {
   return { ...s, profile, onboarding: i, baselineWeeklyKm: i.weeklyKmLast4, onboardingDone: true };
+}
+
+/** Scheda in uso: quella personalizzata o quella di partenza. */
+export function gymPlanOf(s: AppState): Workout[] {
+  return s.gymPlan ?? defaultGymPlan();
+}
+
+export function setGymPlan(s: AppState, plan: Workout[]): AppState {
+  const errors = validateGymPlan(plan);
+  if (errors.length > 0) throw new RangeError(errors[0]);
+  return { ...s, gymPlan: plan };
+}
+
+export function resetGymPlan(s: AppState): AppState {
+  const { gymPlan: _unused, ...rest } = s;
+  void _unused;
+  return rest;
+}
+
+/** Un solo log per allenamento e giorno: salvare di nuovo lo sostituisce. */
+export function saveGymLog(s: AppState, log: GymLog): AppState {
+  const error = validateGymLog(log);
+  if (error) throw new RangeError(error);
+  const others = s.gymLogs.filter((l) => l.id !== log.id && !(l.date === log.date && l.workoutId === log.workoutId));
+  return { ...s, gymLogs: [...others, log].sort(byDate) };
+}
+
+export function removeGymLog(s: AppState, id: string): AppState {
+  return { ...s, gymLogs: s.gymLogs.filter((l) => l.id !== id) };
 }

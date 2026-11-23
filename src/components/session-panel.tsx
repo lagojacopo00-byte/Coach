@@ -5,9 +5,12 @@ import { updateState } from "../data/store";
 import { easyPaceOf } from "../domain/coach";
 import { detailText, formatDuration, formatPaceOrDash, KIND_LABEL, paceHint, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
 import { gelAdvice } from "../domain/rules";
-import { addSkip, removeRun, removeSkip, type AppState } from "../domain/state";
+import Link from "next/link";
+import { workoutOn } from "../domain/gym";
+import { addSkip, gymPlanOf, removeRun, removeSkip, type AppState } from "../domain/state";
+import { logVolume } from "../domain/gym";
 import { isRunSession, paceOf, type SessionStatus } from "../domain/summary";
-import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason } from "../domain/types";
+import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason, type Weekday } from "../domain/types";
 import { IconCheck, IconX } from "./icons";
 import { KIND_STYLE } from "./kind-style";
 import { RunForm } from "./run-form";
@@ -56,13 +59,17 @@ export function SessionPanel({
         <p className="mt-2 text-sm">{detailText(session)}</p>
       </div>
 
-      {adjustment ? (
+      {adjustment?.rule === "R8" ? (
+        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">Facoltativa (R8): {adjustment.reason} Se non la fai non cambia nulla.</p>
+      ) : adjustment ? (
         <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
           Cambiata dal coach ({adjustment.rule}): {adjustment.reason} Previsto: <span className="line-through">{adjustment.original.description}</span>
         </p>
       ) : null}
       {hint ? <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{hint}</p> : null}
       {gel ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{gel.message}</p> : null}
+
+      {session.kind === "gym" ? <GymBlock state={state} date={date} weekday={session.weekday} /> : null}
 
       {!isRun ? null : mode === "done" ? (
         <div className="mt-4">
@@ -107,6 +114,10 @@ export function SessionPanel({
             <button type="button" className={`${btnPrimary} flex-1`} onClick={() => setMode("done")}>Ho corso</button>
             <button type="button" className={`${btnSecondary} flex-1`} onClick={() => updateState((s) => removeSkip(s, date))}>Annulla</button>
           </div>
+        </div>
+      ) : canLog && session.optional ? (
+        <div className="mt-4">
+          <button type="button" className={`${btnPrimary} w-full`} onClick={() => setMode("done")}>Fatto</button>
         </div>
       ) : canLog ? (
         <div className="mt-4 grid grid-cols-2 gap-2">
@@ -160,6 +171,24 @@ function SkipForm({ date, onDone }: { date: IsoDate; onDone: () => void }) {
           Segna non fatta
         </button>
       </div>
+    </div>
+  );
+}
+
+function GymBlock({ state, date, weekday }: { state: AppState; date: IsoDate; weekday: Weekday }) {
+  const workout = workoutOn(gymPlanOf(state), weekday);
+  const done = state.gymLogs.find((l) => l.date === date && (!workout || l.workoutId === workout.id));
+  if (!workout) return null;
+  return (
+    <div className="mt-4">
+      {done ? (
+        <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+          <IconCheck className="h-5 w-5" /> {workout.name} fatta · volume {Math.round(logVolume(done))} kg
+        </p>
+      ) : null}
+      <Link href="/palestra" className={`${done ? btnSecondary : btnPrimary} mt-2 w-full`}>
+        {done ? "Rivedi la scheda" : `Apri la scheda: ${workout.name}`}
+      </Link>
     </div>
   );
 }

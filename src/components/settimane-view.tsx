@@ -30,7 +30,7 @@ export function SettimaneView() {
       {({ state, today }) => {
         const cur = weekForDate(today);
         const views = PLAN_WEEKS.map((w) => weekView(state, w, today));
-        const trend = trendSeries(state);
+        const trend = trendSeries(state, PLAN_WEEKS, today);
         const selWeek = sel ? PLAN_WEEKS[sel.week] : undefined;
         const selView = sel ? views[sel.week] : undefined;
         const selStatus = sel?.type === "session" ? selView?.summary.statuses.find((s) => s.session.weekday === sel.weekday) : undefined;
@@ -82,14 +82,15 @@ export function SettimaneView() {
                         const brief = sessionBrief(s);
                         const style = KIND_STYLE[s.kind];
                         const muted = s.kind === "gym" || s.kind === "rest";
-                        const adjusted = v.effective.adjustments.some((a) => a.weekday === d);
+                        const adjusted = v.effective.adjustments.some((a) => a.weekday === d && a.rule !== "R8");
+                        const gymDone = s.kind === "gym" && state.gymLogs.some((l) => l.date === st.date);
                         return (
                           <button
                             key={d}
                             type="button"
                             onClick={() => setSel({ type: "session", week: w.index, weekday: d })}
                             aria-label={`Settimana ${w.index}, ${WEEKDAY_LABEL[d]} ${shortDate(st.date)}: ${KIND_LABEL[s.kind]} ${brief.main} ${brief.sub ?? ""}${st.state === "done" ? ", fatta" : st.state === "skipped" || st.state === "missed" ? ", non fatta" : ""}`}
-                            className={`relative flex min-h-[3.6rem] flex-col items-center justify-center overflow-hidden rounded-lg px-0.5 py-1 text-center leading-tight ${style.cell} ${st.state === "today" ? "ring-2 ring-inset ring-orange-500" : ""} ${st.state === "missed" || st.state === "skipped" ? "opacity-50" : ""} ${adjusted ? "outline outline-2 -outline-offset-2 outline-amber-500" : ""}`}
+                            className={`relative flex min-h-[3.6rem] flex-col items-center justify-center overflow-hidden rounded-lg px-0.5 py-1 text-center leading-tight ${style.cell} ${st.state === "today" ? "ring-2 ring-inset ring-orange-500" : ""} ${st.state === "missed" || st.state === "skipped" ? "opacity-50" : ""} ${s.optional ? "border-2 border-dashed border-emerald-500/60" : ""} ${adjusted ? "outline outline-2 -outline-offset-2 outline-amber-500" : ""}`}
                           >
                             {s.kind === "rest" ? (
                               <span className="text-xs">·</span>
@@ -100,7 +101,7 @@ export function SettimaneView() {
                                 {brief.sub ? <span className="text-[8px] leading-tight opacity-80">{brief.sub}</span> : null}
                               </>
                             )}
-                            {st.state === "done" && !muted ? <IconCheck className="absolute right-0.5 top-0.5 h-3 w-3" /> : null}
+                            {(st.state === "done" && !muted) || gymDone ? <IconCheck className="absolute right-0.5 top-0.5 h-3 w-3" /> : null}
                             {(st.state === "skipped" || st.state === "missed") ? <IconX className="absolute right-0.5 top-0.5 h-3 w-3" /> : null}
                           </button>
                         );

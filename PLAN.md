@@ -36,6 +36,8 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] Griglia Settimane (righe = settimane, colonne = giorni, colori per tipo) con andamento carico/lungo
 - [x] Oggi = allenamento del giorno + Fatto/Non fatto/sensazioni; via countdown, fasi e vista Domenica
 - [x] Icone al posto delle emoji, nuovo logo
+- [x] R8: easy facoltativa del mercoledì dalla sett. 5, solo se dolore <3/10 a tibie/polpacci (21 gg), niente gambe pesanti (14 gg), nessuno stop R3 e +10% rispettato
+- [x] Palestra: scheda modificabile, log pesi/ripetizioni, progressione, storico e progressi
 - [ ] Import dati Garmin (serve un export reale per testare il formato)
 
 ## F5 PWA

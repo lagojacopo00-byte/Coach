@@ -44,6 +44,8 @@ export interface Session {
   km?: number;
   /** Km previsti a ritmo maratona dentro la seduta. */
   rmKm?: number;
+  /** Facoltativa: non conta come saltata se non la fai. */
+  optional?: boolean;
 }
 
 export interface Week {
@@ -110,7 +112,7 @@ export interface CheckIn {
   heavyLegs?: boolean;
 }
 
-export const RULE_IDS = ["R1", "R2", "R3", "R4", "R5", "R6", "R7"] as const;
+export const RULE_IDS = ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"] as const;
 export type RuleId = (typeof RULE_IDS)[number];
 
 export type AdviceLevel = "info" | "warning" | "stop";

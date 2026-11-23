@@ -17,8 +17,9 @@ npm run build && npm start
 
 ## Come usarla
 
-- **Oggi**: l'allenamento del giorno, con ritmi e FC. Tocca **Fatto** (km, tempo, FC, D+, sensazioni, dolore) o **Non fatto** (con motivo). Sotto, la settimana giorno per giorno e il check-in "gambe pesanti o dolore?".
+- **Oggi**: l'allenamento del giorno (dalla settimana 5 il mercoledì può comparire una easy facoltativa di 35', solo se tibie/polpacci non danno segnali; si disattiva da Profilo), con ritmi e FC. Tocca **Fatto** (km, tempo, FC, D+, sensazioni, dolore) o **Non fatto** (con motivo). Sotto, la settimana giorno per giorno e il check-in "gambe pesanti o dolore?".
 - **Settimane**: tutte le 16 settimane in una griglia (righe = settimane, colonne = lun–dom), colorate per tipo di seduta (Easy, Lungo, Salite, Soglia, RM, Test/gara, Pesi). Tocca un giorno per dettagli e log, tocca il numero della settimana per il riepilogo. In fondo, l'andamento: carico settimanale e lungo, pianificato vs fatto.
+- **Palestra**: la scheda (Full body A il lunedì, B il venerdì con gambe leggere). Registri pesi e ripetizioni per serie; la volta dopo l'app ti dice se salire di peso (doppia progressione: quando chiudi tutte le serie al massimo delle ripetizioni sali di peso, altrimenti resti e punti a più ripetizioni). La scheda si modifica dall'app.
 - **Corse**: per registrare una corsa fuori piano e vedere il registro.
 - **Profilo**: dati di onboarding, zone FC, **test soglia** (ricalcola zone e ritmi), **mezza di prova** (valuta il target), backup, data simulata.
 
