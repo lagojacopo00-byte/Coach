@@ -40,7 +40,7 @@ export function GymEditor({ plan, onDone }: { plan: Workout[]; onDone: () => voi
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Cambia quello che vuoi: lo storico resta agganciato agli esercizi. L&apos;incremento è quanti kg salire quando chiudi tutte le serie al massimo delle ripetizioni.
+        Cambia nomi, ripetizioni e incrementi, aggiungi o togli esercizi: lo storico resta agganciato. Le serie le decide il coach: le fa salire col tempo e le abbassa in scarico. L&apos;incremento è quanti kg salire quando chiudi tutte le serie al massimo delle ripetizioni.
       </p>
       {draft.map((w, wi) => (
         <section key={w.id}>
@@ -49,8 +49,7 @@ export function GymEditor({ plan, onDone }: { plan: Workout[]; onDone: () => voi
             {w.exercises.map((e, ei) => (
               <Card key={e.id} className="!p-3">
                 <input aria-label="Nome esercizio" className={inputCls} value={e.name} onChange={(ev) => patch(wi, ei, { name: ev.target.value })} />
-                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
-                  <label>Serie<input inputMode="numeric" className={inputCls} value={e.sets} onChange={(ev) => patch(wi, ei, { sets: numOr(ev.target.value, e.sets) })} /></label>
+                <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                   <label>Rip. min<input inputMode="numeric" className={inputCls} value={e.repMin} onChange={(ev) => patch(wi, ei, { repMin: numOr(ev.target.value, e.repMin) })} /></label>
                   <label>Rip. max<input inputMode="numeric" className={inputCls} value={e.repMax} onChange={(ev) => patch(wi, ei, { repMax: numOr(ev.target.value, e.repMax) })} /></label>
                   <label>+ kg<input inputMode="decimal" className={inputCls} value={e.incrementKg} onChange={(ev) => patch(wi, ei, { incrementKg: numOr(ev.target.value, e.incrementKg) })} /></label>

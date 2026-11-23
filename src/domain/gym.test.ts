@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   defaultGymPlan,
+  draftToLog,
   effectiveSets,
   exerciseHistory,
   gymContext,
   gymWeekNotes,
+  isConsistent,
+  setsChangeNote,
+  setWeight,
+  volumeBonus,
+  type GymDraft,
   lastSets,
   logVolume,
   suggestNext,
@@ -16,7 +22,7 @@ import {
   type GymLog,
 } from "./gym";
 import { PLAN_WEEKS } from "./plan.seed";
-import { gymPlanOf, initialState, parseState, removeGymLog, resetGymPlan, saveGymLog, setGymPlan } from "./state";
+import { autosaveGym, finishGymDraft, gymPlanOf, initialState, parseState, removeGymLog, resetGymPlan, saveGymLog, setGymPlan } from "./state";
 
 const squat: Exercise = { id: "squat", name: "Squat", sets: 3, repMin: 5, repMax: 8, incrementKg: 5 };
 const log = (over: Partial<GymLog> & { sets?: [number, number][] }): GymLog => ({
@@ -96,8 +102,8 @@ describe("dosaggio per settimana", () => {
     expect(gymContext(w(5)).hardQuality).toBe(false);
   });
   it("non scende mai sotto 1 serie; senza settimana nessun aggiustamento", () => {
-    expect(effectiveSets({ ...defaultGymPlan()[0].exercises[0], sets: 1 }, { deload: true, taper: true, hardQuality: false })).toBe(1);
-    expect(gymContext(undefined)).toEqual({ deload: false, taper: false, hardQuality: false });
+    expect(effectiveSets({ ...defaultGymPlan()[0].exercises[0], sets: 1 }, { weekIndex: 14, deload: true, taper: true, hardQuality: false, consistent: false })).toBe(1);
+    expect(gymContext(undefined)).toEqual({ weekIndex: 0, deload: false, taper: false, hardQuality: false, consistent: false });
   });
   it("note leggibili", () => {
     expect(gymWeekNotes(gymContext(w(4)))[0]).toMatch(/scarico/);
@@ -214,5 +220,119 @@ describe("stato palestra", () => {
     const old = { ...initialState() } as Record<string, unknown>;
     delete old.gymLogs;
     expect(parseState(old)?.gymLogs).toEqual([]);
+  });
+});
+
+describe("volume che cresce (lo decide il coach)", () => {
+  const plan = defaultGymPlan();
+  const ex = (id: string) => plan.flatMap((w) => w.exercises).find((e) => e.id === id)!;
+  const three = (): GymLog[] => ["2026-12-01", "2026-12-04", "2026-12-08"].map((d, i) => log({ id: `c${i}`, date: d }));
+  const ctx = (week: number, consistent = true) => ({ ...gymContext(PLAN_WEEKS[week]), consistent });
+
+  it("continuità: servono 3 allenamenti nelle ultime 3 settimane", () => {
+    expect(isConsistent(three(), "2026-12-10")).toBe(true);
+    expect(isConsistent(three().slice(0, 2), "2026-12-10")).toBe(false);
+    expect(isConsistent(three(), "2027-01-20")).toBe(false); // troppo vecchi
+    expect(gymContext(PLAN_WEEKS[5], { logs: three(), date: "2026-12-28" }).consistent).toBe(false); // 28 dic: i log sono oltre 21 giorni
+    expect(gymContext(PLAN_WEEKS[2], { logs: three(), date: "2026-12-10" }).consistent).toBe(true);
+  });
+  it("prima della settimana 5 le serie sono quelle di base", () => {
+    for (const id of ["panca", "tirata", "alzate-a"]) expect(effectiveSets(ex(id), ctx(2)), id).toBe(ex(id).sets);
+    expect(effectiveSets(ex("panca"), ctx(4))).toBe(2); // sett. 4 è di scarico: 3 − 1
+    expect(volumeBonus(ex("panca"), ctx(3))).toBe(0);
+  });
+  it("dalla settimana 5: +1 serie su panca, tirata e alzate; dalla 10 le alzate arrivano a 5", () => {
+    expect(effectiveSets(ex("panca"), ctx(6))).toBe(4);
+    expect(effectiveSets(ex("tirata"), ctx(6))).toBe(4);
+    expect(effectiveSets(ex("alzate-a"), ctx(6))).toBe(4);
+    expect(effectiveSets(ex("alzate-a"), ctx(10))).toBe(5);
+    expect(effectiveSets(ex("panca"), ctx(10))).toBe(4);
+  });
+  it("senza continuità il volume non sale", () => {
+    expect(effectiveSets(ex("panca"), ctx(6, false))).toBe(3);
+  });
+  it("chin-up, military e gambe non aumentano mai", () => {
+    for (const id of ["chin-up", "military", "rdl", "bulgari"]) expect(effectiveSets(ex(id), ctx(7)), id).toBe(ex(id).sets);
+    expect(effectiveSets(ex("squat"), ctx(7))).toBe(3);
+  });
+  it("in scarico si toglie una serie anche dal volume aumentato", () => {
+    expect(effectiveSets(ex("panca"), ctx(9))).toBe(3); // (3+1)-1
+    expect(effectiveSets(ex("alzate-a"), ctx(9))).toBe(3);
+  });
+  it("note sul perché le serie cambiano", () => {
+    expect(setsChangeNote(ex("panca"), ctx(6))).toMatch(/\+1 serie: volume in crescita/);
+    expect(setsChangeNote(ex("chin-up"), ctx(4))).toMatch(/-1 serie: scarico/);
+    expect(setsChangeNote(ex("rdl"), ctx(14))).toMatch(/gambe dimezzate/);
+    expect(setsChangeNote(ex("squat"), ctx(10))).toMatch(/qualità dura/);
+    expect(setsChangeNote(ex("panca"), ctx(2))).toBeUndefined();
+  });
+});
+
+describe("carico copiato su tutte le serie", () => {
+  const rows = [{ w: "", r: "" }, { w: "", r: "" }, { w: "", r: "" }];
+  it("scrivo il carico una volta e si copia su tutte le altre; le ripetizioni restano mie", () => {
+    const r = setWeight(setWeight(rows, 0, "6"), 0, "60");
+    expect(r.map((x) => x.w)).toEqual(["60", "60", "60"]);
+    expect(r.map((x) => x.r)).toEqual(["", "", ""]);
+    const withReps = setWeight([{ w: "", r: "8" }, { w: "", r: "7" }, { w: "", r: "" }], 1, "62,5");
+    expect(withReps.map((x) => x.r)).toEqual(["8", "7", ""]);
+    expect(withReps.map((x) => x.w)).toEqual(["62,5", "62,5", "62,5"]);
+  });
+  it("una serie scritta a mano non viene sovrascritta dalle altre", () => {
+    let r = setWeight(rows, 0, "60");
+    r = setWeight(r, 2, "55"); // 3ª serie diversa: copia anche sulla 2ª (non manuale), non sulla 1ª (manuale)
+    expect(r.map((x) => x.w)).toEqual(["60", "55", "55"]);
+    r = setWeight(r, 0, "65"); // la 2ª non è scritta a mano → segue; la 3ª sì → resta 55
+    expect(r.map((x) => x.w)).toEqual(["65", "65", "55"]);
+  });
+  it("non muta l'originale", () => {
+    setWeight(rows, 0, "60");
+    expect(rows[0].w).toBe("");
+  });
+});
+
+describe("salvataggio a ogni modifica", () => {
+  const A = defaultGymPlan()[0];
+  const draft = (rows: GymDraft["rows"], notes = ""): GymDraft => ({ date: "2026-12-07", workoutId: "A", rows, notes });
+  it("draftToLog: solo serie con ripetizioni valide; peso vuoto = peso corpo; senza serie = niente", () => {
+    expect(draftToLog(draft({ squat: [{ w: "60", r: "" }] }), A)).toBeUndefined();
+    const l = draftToLog(draft({ squat: [{ w: "60", r: "8" }, { w: "60", r: "" }, { w: "60", r: "7" }], "chin-up": [{ w: "", r: "6" }] }, " bene "), A)!;
+    expect(l.entries.map((e) => [e.exerciseId, e.sets])).toEqual([
+      ["squat", [{ weightKg: 60, reps: 8 }, { weightKg: 60, reps: 7 }]],
+      ["chin-up", [{ weightKg: 0, reps: 6 }]],
+    ]);
+    expect(l.id).toBe("gym-2026-12-07-A");
+    expect(l.notes).toBe("bene");
+    expect(draftToLog(draft({ squat: [{ w: "60", r: "8,5" }] }), A)).toBeUndefined();
+    expect(draftToLog(draft({ squat: [{ w: "abc", r: "8" }] }), A)).toBeUndefined();
+  });
+  it("autosaveGym: scrivo un peso → bozza salvata; scrivo le ripetizioni → compare nello storico", () => {
+    let s = autosaveGym(initialState(), draft({ squat: [{ w: "60", r: "" }, { w: "60", r: "" }] }), A);
+    expect(s.gymDrafts).toHaveLength(1);
+    expect(s.gymLogs).toHaveLength(0);
+    s = autosaveGym(s, draft({ squat: [{ w: "60", r: "8" }, { w: "60", r: "" }] }), A);
+    expect(s.gymDrafts).toHaveLength(1);
+    expect(s.gymLogs).toHaveLength(1);
+    expect(lastSets(s.gymLogs, "squat")?.sets).toEqual([{ weightKg: 60, reps: 8 }]);
+  });
+  it("togliendo tutte le ripetizioni l'allenamento esce dallo storico", () => {
+    let s = autosaveGym(initialState(), draft({ squat: [{ w: "60", r: "8" }] }), A);
+    s = autosaveGym(s, draft({ squat: [{ w: "60", r: "" }] }), A);
+    expect(s.gymLogs).toHaveLength(0);
+    expect(s.gymDrafts).toHaveLength(1);
+  });
+  it("finishGymDraft toglie la bozza ma non l'allenamento; le bozze vecchie si ripuliscono", () => {
+    let s = autosaveGym(initialState(), draft({ squat: [{ w: "60", r: "8" }] }), A);
+    s = finishGymDraft(s, "2026-12-07", "A");
+    expect(s.gymDrafts).toEqual([]);
+    expect(s.gymLogs).toHaveLength(1);
+    s = autosaveGym(s, { ...draft({ squat: [{ w: "50", r: "" }] }), date: "2026-12-07" }, A);
+    s = autosaveGym(s, { ...draft({ squat: [{ w: "70", r: "" }] }), date: "2027-01-10" }, A);
+    expect(s.gymDrafts.map((d) => d.date)).toEqual(["2027-01-10"]);
+  });
+  it("un vecchio salvataggio senza bozze si legge lo stesso", () => {
+    const old = { ...initialState() } as Record<string, unknown>;
+    delete old.gymDrafts;
+    expect(parseState(old)?.gymDrafts).toEqual([]);
   });
 });

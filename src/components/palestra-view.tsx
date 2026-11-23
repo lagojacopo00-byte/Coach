@@ -44,7 +44,7 @@ function Content({ state, today }: { state: AppState; today: IsoDate }) {
           <span className="mb-1 block text-sm font-medium">Data</span>
           <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
-        <GymLogForm key={`${workout.id}-${date}`} workout={workout} date={date} state={state} onSaved={() => { setSaved(true); setMode({ type: "list" }); }} onCancel={() => setMode({ type: "list" })} />
+        <GymLogForm key={`${workout.id}-${date}`} workout={workout} date={date} state={state} onDone={() => { setSaved(true); setMode({ type: "list" }); }} onBack={() => setMode({ type: "list" })} />
       </>
     );
   }
@@ -53,11 +53,11 @@ function Content({ state, today }: { state: AppState; today: IsoDate }) {
   return (
     <>
       <PageTitle sub="Registra pesi e ripetizioni: la volta dopo ti dico quando salire">Palestra</PageTitle>
-      {saved ? <Card tone="ok" className="mb-3 flex items-center gap-2 !p-3"><IconCheck className="h-5 w-5" /> Allenamento salvato</Card> : null}
+      {saved ? <Card tone="ok" className="mb-3 flex items-center gap-2 !p-3"><IconCheck className="h-5 w-5" /> Allenamento chiuso: è nello storico</Card> : null}
 
       <ul className="space-y-3">
         {plan.map((w) => (
-          <WorkoutCard key={w.id} w={w} state={state} isToday={todays?.id === w.id} onStart={() => { setSaved(false); setDate(today); setMode({ type: "log", workoutId: w.id }); }} />
+          <WorkoutCard key={w.id} w={w} state={state} today={today} isToday={todays?.id === w.id} onStart={() => { setSaved(false); setDate(today); setMode({ type: "log", workoutId: w.id }); }} />
         ))}
       </ul>
       <button type="button" className={`${btnSecondary} mt-3 w-full`} onClick={() => setMode({ type: "edit" })}>Modifica scheda</button>
@@ -85,7 +85,8 @@ function Content({ state, today }: { state: AppState; today: IsoDate }) {
   );
 }
 
-function WorkoutCard({ w, state, isToday, onStart }: { w: Workout; state: AppState; isToday: boolean; onStart: () => void }) {
+function WorkoutCard({ w, state, today, isToday, onStart }: { w: Workout; state: AppState; today: IsoDate; isToday: boolean; onStart: () => void }) {
+  const inProgress = state.gymDrafts.some((d) => d.date === today && d.workoutId === w.id);
   const last = [...state.gymLogs].reverse().find((l) => l.workoutId === w.id);
   return (
     <li className={`rounded-2xl border bg-white p-4 dark:bg-zinc-900 ${isToday ? "border-orange-500 ring-1 ring-orange-500" : "border-zinc-200 dark:border-zinc-800"}`}>
@@ -97,7 +98,7 @@ function WorkoutCard({ w, state, isToday, onStart }: { w: Workout; state: AppSta
       <p className="mt-1 text-sm text-zinc-500">
         {w.exercises.length} esercizi{last ? ` · ultima volta ${shortDate(last.date)}, volume ${Math.round(logVolume(last))} kg` : " · mai fatto"}
       </p>
-      <button type="button" className={`${btnPrimary} mt-3 w-full`} onClick={onStart}>Inizia</button>
+      <button type="button" className={`${btnPrimary} mt-3 w-full`} onClick={onStart}>{inProgress ? "Riprendi" : "Inizia"}</button>
     </li>
   );
 }
