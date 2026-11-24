@@ -83,6 +83,8 @@ export interface Run {
   /** Gambe pesanti riportate. */
   heavyLegs?: boolean;
   notes?: string;
+  /** Id dell'attività su Strava, se la corsa è stata importata (evita i doppioni). */
+  stravaId?: number;
 }
 
 export interface Profile {
@@ -97,7 +99,7 @@ export interface Profile {
   /** Target maratona in sec/km (default 5:41 = 341). */
   targetPaceSecPerKm: number;
   raceDate: IsoDate;
-  /** Giorni fissi di default: corsa mar/gio/dom, palestra lun/ven. */
+  /** Giorni fissi di default: corsa mar/gio/dom, palestra lun/mer. */
   runDays: Weekday[];
   gymDays: Weekday[];
 }

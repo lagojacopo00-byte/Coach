@@ -28,7 +28,7 @@ export interface Exercise {
 export interface Workout {
   id: string;
   name: string;
-  /** Giorno fisso della settimana (lun/ven nel piano). */
+  /** Giorno fisso della settimana (lun/mer nel piano). */
   weekday: Weekday;
   focus: string;
   exercises: Exercise[];
