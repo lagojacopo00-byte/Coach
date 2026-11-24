@@ -38,7 +38,8 @@ describe("state", () => {
     s = addRun(s, run({ id: "a", date: "2026-11-24", km: 9 }));
     expect(s.runs).toHaveLength(2);
     expect(s.runs[0].km).toBe(9);
-    expect(() => addRun(s, run({ km: 0 }))).toThrow(RangeError);
+    expect(() => addRun(s, run({ km: -1 }))).toThrow(RangeError);
+    expect(() => addRun(s, run({ durationSec: -5 }))).toThrow(RangeError);
     expect(() => addRun(s, run({ pain: 11 }))).toThrow(RangeError);
     expect(removeRun(s, "a").runs.map((r) => r.id)).toEqual(["b"]);
   });
@@ -129,5 +130,17 @@ describe("non fatto", () => {
     const old = { ...initialState() } as Record<string, unknown>;
     delete old.skips;
     expect(parseState(old)?.skips).toEqual([]);
+  });
+});
+
+describe("corsa senza dati", () => {
+  it("si può salvare solo \"fatto\", senza km né tempo", () => {
+    const s = addRun(initialState(), run({ km: 0, durationSec: 0, feeling: "buone" }));
+    expect(s.runs).toHaveLength(1);
+    expect(s.runs[0].feeling).toBe("buone");
+  });
+  it("anche con solo i km o solo il tempo", () => {
+    expect(addRun(initialState(), run({ km: 6, durationSec: 0 })).runs[0].km).toBe(6);
+    expect(addRun(initialState(), run({ km: 0, durationSec: 1800 })).runs[0].durationSec).toBe(1800);
   });
 });

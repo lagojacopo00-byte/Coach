@@ -59,7 +59,9 @@ export function initialState(): AppState {
 const byDate = <T extends { date: IsoDate }>(a: T, b: T) => a.date.localeCompare(b.date);
 
 export function addRun(s: AppState, run: Run): AppState {
-  if (!(run.km > 0) || !(run.durationSec > 0)) throw new RangeError("Km e tempo devono essere positivi");
+  // Km e tempo sono facoltativi (0 = non indicato): si può segnare "fatto" anche senza dati.
+  if (!(run.km >= 0) || !(run.durationSec >= 0) || !Number.isFinite(run.km) || !Number.isFinite(run.durationSec))
+    throw new RangeError("Km e tempo non possono essere negativi");
   if (run.pain < 0 || run.pain > 10) throw new RangeError("Il dolore va da 0 a 10");
   const runs = [...s.runs.filter((r) => r.id !== run.id), run].sort(byDate);
   // Una corsa registrata annulla un "non fatto" dello stesso giorno.

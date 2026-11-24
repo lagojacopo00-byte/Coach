@@ -124,6 +124,6 @@ export function weekSummary(
 }
 
 export function paceOf(run: Pick<Run, "km" | "durationSec" | "avgPaceSecPerKm">): number | undefined {
-  if (run.avgPaceSecPerKm) return run.avgPaceSecPerKm;
-  return run.km > 0 ? run.durationSec / run.km : undefined;
+  if (!(run.km > 0) || !(run.durationSec > 0)) return undefined;
+  return run.avgPaceSecPerKm ?? run.durationSec / run.km;
 }

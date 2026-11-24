@@ -103,3 +103,54 @@ describe("detailText", () => {
     expect(detailText(easy)).toBe(easy.description);
   });
 });
+
+import { formatRunSummary, formatTimeDigits, parseOptionalDuration } from "./guidance";
+describe("digitazione senza i due punti", () => {
+  it("le cifre entrano da destra, come su una calcolatrice", () => {
+    expect(formatTimeDigits("4")).toBe("0:04");
+    expect(formatTimeDigits("45")).toBe("0:45");
+    expect(formatTimeDigits("450")).toBe("4:50");
+    expect(formatTimeDigits("4139")).toBe("41:39");
+    expect(formatTimeDigits("14105")).toBe("1:41:05");
+    expect(formatTimeDigits("015400")).toBe("1:54:00");
+    expect(formatTimeDigits("")).toBe("");
+  });
+  it("ignora ciò che non è una cifra e accetta anche l'incolla", () => {
+    expect(formatTimeDigits("1:54:00")).toBe("1:54:00");
+    expect(formatTimeDigits("41:39")).toBe("41:39");
+    expect(formatTimeDigits("abc")).toBe("");
+  });
+  it("si cancella un numero alla volta (backspace sul testo formattato)", () => {
+    expect(formatTimeDigits("41:3")).toBe("4:13");
+    expect(formatTimeDigits("4:1")).toBe("0:41");
+  });
+  it("rispetta il massimo di cifre (passo: 4)", () => {
+    expect(formatTimeDigits("1005", 4)).toBe("10:05");
+    expect(formatTimeDigits("10056", 4)).toBe("10:05");
+    expect(formatTimeDigits("525", 4)).toBe("5:25");
+  });
+  it("il risultato si legge sempre con parseDuration (se i secondi sono validi)", () => {
+    expect(parseDuration(formatTimeDigits("4139"))).toBe(41 * 60 + 39);
+    expect(parseDuration(formatTimeDigits("15230"))).toBe(3600 + 52 * 60 + 30);
+    expect(parseDuration(formatTimeDigits("075"))).toBeUndefined(); // 0:75 non esiste
+  });
+});
+
+describe("durata facoltativa", () => {
+  it("vuoto o zero = nessun dato, valida = secondi, secondi sballati = non valida", () => {
+    expect(parseOptionalDuration("")).toBe(0);
+    expect(parseOptionalDuration("  ")).toBe(0);
+    expect(parseOptionalDuration("0:00")).toBe(0);
+    expect(parseOptionalDuration("41:39")).toBe(2499);
+    expect(parseOptionalDuration("0:75")).toBeUndefined();
+  });
+});
+
+describe("riepilogo di una corsa", () => {
+  it("mostra solo i dati che ci sono", () => {
+    expect(formatRunSummary({ km: 5.91, durationSec: 2499 })).toBe("5,9 km · 41:39 · 7:03/km");
+    expect(formatRunSummary({ km: 6, durationSec: 0 })).toBe("6,0 km");
+    expect(formatRunSummary({ km: 0, durationSec: 1800 })).toBe("30:00");
+    expect(formatRunSummary({ km: 0, durationSec: 0 })).toBe("senza km e tempo");
+  });
+});

@@ -40,6 +40,7 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] Palestra: scheda modificabile, log pesi/ripetizioni, progressione, storico e progressi
 - [x] Scheda palestra concordata: due full body (A lun, B mer), gambe spezzate, prevenzione tibie/polpacci; scarico/tapering/qualità dura dosano le serie
 - [x] Palestra: serie decise dal coach (volume +1 su panca, tirata e alzate dalla sett. 5, solo con continuità), carico copiato su tutte le serie, salvataggio a ogni modifica con ripresa dell'allenamento
+- [x] Tempi e passi scritti solo con le cifre (4139 → 41:39) e corsa salvabile senza km, tempo o altri dati
 - [ ] Import dati Garmin (serve un export reale per testare il formato)
 
 ## F5 PWA

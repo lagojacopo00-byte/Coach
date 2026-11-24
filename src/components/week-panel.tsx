@@ -32,7 +32,7 @@ export function WeekPanel({ week, state, today }: { week: Week; state: AppState;
           Dolori: {v.summary.painRuns.length === 0 ? "nessuno segnalato" : v.summary.painRuns.map((r) => `${shortDate(r.date)} ${r.pain}/10${r.painLocation ? ` ${r.painLocation}` : ""}`).join("; ")}.
         </p>
         {skipped > 0 ? <p className="mt-1 text-sm">Sedute non fatte: {skipped}. Non si recuperano.</p> : null}
-        {v.summary.extraRuns.length > 0 ? <p className="mt-1 text-sm text-zinc-500">Corse extra: {v.summary.extraRuns.map((r) => `${shortDate(r.date)} ${r.km.toFixed(1)} km`).join(", ")}.</p> : null}
+        {v.summary.extraRuns.length > 0 ? <p className="mt-1 text-sm text-zinc-500">Corse extra: {v.summary.extraRuns.map((r) => (r.km > 0 ? `${shortDate(r.date)} ${r.km.toFixed(1)} km` : shortDate(r.date))).join(", ")}.</p> : null}
       </Card>
       <AdviceList advices={v.advices} />
     </div>

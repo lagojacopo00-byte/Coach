@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { updateState } from "../data/store";
 import { easyPaceOf } from "../domain/coach";
-import { detailText, formatDuration, formatPaceOrDash, KIND_LABEL, paceHint, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
+import { detailText, formatRunSummary, KIND_LABEL, paceHint, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
 import { gelAdvice } from "../domain/rules";
 import Link from "next/link";
 import { workoutOn } from "../domain/gym";
 import { addSkip, gymPlanOf, removeRun, removeSkip, type AppState } from "../domain/state";
 import { logVolume } from "../domain/gym";
-import { isRunSession, paceOf, type SessionStatus } from "../domain/summary";
+import { isRunSession, type SessionStatus } from "../domain/summary";
 import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason, type Weekday } from "../domain/types";
 import { IconCheck, IconX } from "./icons";
 import { KIND_STYLE } from "./kind-style";
@@ -91,7 +91,7 @@ export function SessionPanel({
             <IconCheck className="h-5 w-5" /> Fatta
           </p>
           <p className="mt-1 text-sm">
-            {run.km.toFixed(1)} km · {formatDuration(run.durationSec)} · {formatPaceOrDash(paceOf(run))}/km
+            {formatRunSummary(run)}
             {run.avgHr ? ` · ${run.avgHr} bpm` : ""}
             {run.elevationGainM ? ` · D+ ${run.elevationGainM} m` : ""}
           </p>

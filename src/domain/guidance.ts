@@ -177,3 +177,35 @@ export function detailText(s: Session): string {
   if (s.kind === "hills") return s.description.replace(/^Salite\s+[^.]*\.\s*/, "") || s.description;
   return s.description;
 }
+
+/**
+ * Digitazione "a calcolatrice" per tempi e passi con la tastiera numerica (senza i due punti):
+ * le cifre entrano da destra. 4139 → 41:39, 14105 → 1:41:05, 525 → 5:25. Ignora tutto ciò che non è una cifra,
+ * quindi funziona anche se incolli "1:54:00".
+ */
+export function formatTimeDigits(raw: string, maxDigits = 6): string {
+  const d = raw.replace(/\D/g, "").slice(0, maxDigits);
+  if (d === "") return "";
+  const p = d.padStart(3, "0");
+  const ss = p.slice(-2);
+  const rest = p.slice(0, -2);
+  if (rest.length <= 2) return `${Number(rest)}:${ss}`;
+  return `${Number(rest.slice(0, -2))}:${rest.slice(-2)}:${ss}`;
+}
+
+/** Durata facoltativa: vuoto o zero → 0 (nessun dato); valida → secondi; non valida (es. 0:75) → undefined. */
+export function parseOptionalDuration(text: string): number | undefined {
+  const t = text.trim();
+  if (t === "" || /^[0:]+$/.test(t)) return 0;
+  return parseDuration(t);
+}
+
+/** Riga di riepilogo di una corsa: mostra solo i dati che ci sono. */
+export function formatRunSummary(run: { km: number; durationSec: number; avgPaceSecPerKm?: number }): string {
+  const parts: string[] = [];
+  if (run.km > 0) parts.push(`${run.km.toFixed(1).replace(".", ",")} km`);
+  if (run.durationSec > 0) parts.push(formatDuration(run.durationSec));
+  const pace = run.avgPaceSecPerKm ?? (run.km > 0 && run.durationSec > 0 ? run.durationSec / run.km : undefined);
+  if (pace && run.km > 0 && run.durationSec > 0) parts.push(`${formatPaceOrDash(pace)}/km`);
+  return parts.length > 0 ? parts.join(" · ") : "senza km e tempo";
+}
