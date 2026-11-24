@@ -19,6 +19,7 @@ import {
 } from "../domain/state";
 import { easyPaceRange, formatPace, hrZones, parsePace, thresholdPaceRange } from "../domain/zones";
 import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, H2, inputCls, PageTitle } from "./ui";
+import { TimeInput } from "./time-input";
 import { WithCoach } from "./with-coach";
 
 const num = (v: string): number | undefined => (v.trim() === "" ? undefined : Number(v.replace(",", ".")));
@@ -202,7 +203,7 @@ function ThresholdTest({ state, today }: { state: AppState; today: string }) {
           <Field label="Data"><input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="FC media ultimi 20'"><input inputMode="numeric" className={inputCls} value={hr} onChange={(e) => setHr(e.target.value)} placeholder="bpm" /></Field>
-            <Field label="Passo medio ultimi 20'"><input inputMode="numeric" className={inputCls} value={pace} onChange={(e) => setPace(e.target.value)} placeholder="5:25" /></Field>
+            <Field label="Passo medio ultimi 20'" hint="Solo cifre: 525 diventa 5:25"><TimeInput maxDigits={4} value={pace} onChange={setPace} placeholder="5:25" /></Field>
           </div>
           {error ? <p role="alert" className="text-sm font-medium text-red-600">{error}</p> : null}
           <button type="submit" className={`${btnPrimary} w-full`}>Ricalcola zone e ritmi</button>
@@ -233,7 +234,7 @@ function HalfTest({ state, today }: { state: AppState; today: string }) {
           setError(undefined);
           updateState((s) => recordHalf(s, { date: today, timeSec: sec }));
         }}>
-          <Field label="Tempo ufficiale" hint={`Checkpoint: ≤ ${formatDuration(HALF_CHECKPOINT_SEC)} = sub 4 realistico.`}><input inputMode="numeric" className={inputCls} value={time} onChange={(e) => setTime(e.target.value)} placeholder="1:52:30" /></Field>
+          <Field label="Tempo ufficiale" hint={`Solo cifre: 15230 diventa 1:52:30. Checkpoint: ≤ ${formatDuration(HALF_CHECKPOINT_SEC)} = sub 4 realistico.`}><TimeInput value={time} onChange={setTime} placeholder="1:52:30" /></Field>
           {error ? <p role="alert" className="text-sm font-medium text-red-600">{error}</p> : null}
           <button type="submit" className={`${btnSecondary} w-full`}>Valuta il checkpoint</button>
         </form>

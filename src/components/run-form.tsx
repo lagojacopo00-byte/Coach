@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { updateState } from "../data/store";
-import { formatDuration, formatPaceOrDash, KIND_LABEL, parseDuration } from "../domain/guidance";
+import { formatDuration, formatPaceOrDash, KIND_LABEL, parseOptionalDuration } from "../domain/guidance";
 import { addRun } from "../domain/state";
 import { isRunSession, paceOf, RUN_KINDS } from "../domain/summary";
 import type { IsoDate, PainLocation, PainType, Run, RunFeeling, SessionKind } from "../domain/types";
 import { RUN_FEELINGS } from "../domain/types";
 import { weekForDate, weekdayOf } from "../domain/week";
+import { TimeInput } from "./time-input";
 import { btnPrimary, btnSecondary, Field, inputCls } from "./ui";
 
 /** Tipo di seduta pianificato per una data (easy se non c'è una corsa in piano). */
@@ -43,8 +44,8 @@ export function RunForm({
 }) {
   const [date, setDate] = useState(existing?.date ?? initialDate);
   const [kind, setKind] = useState<SessionKind>(existing?.kind ?? defaultKind);
-  const [km, setKm] = useState(existing ? String(existing.km).replace(".", ",") : plannedKm ? String(plannedKm).replace(".", ",") : "");
-  const [time, setTime] = useState(existing ? formatDuration(existing.durationSec) : "");
+  const [km, setKm] = useState(existing && existing.km > 0 ? String(existing.km).replace(".", ",") : "");
+  const [time, setTime] = useState(existing && existing.durationSec > 0 ? formatDuration(existing.durationSec) : "");
   const [hr, setHr] = useState(existing?.avgHr?.toString() ?? "");
   const [gain, setGain] = useState(existing?.elevationGainM?.toString() ?? "");
   const [feeling, setFeeling] = useState<RunFeeling | undefined>(existing?.feeling);
@@ -55,13 +56,14 @@ export function RunForm({
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [error, setError] = useState<string>();
 
-  const kmN = Number(km.replace(",", "."));
-  const dur = parseDuration(time);
+  // Km, tempo e il resto sono facoltativi: puoi salvare anche solo "fatto".
+  const kmN = km.trim() === "" ? 0 : Number(km.replace(",", "."));
+  const dur = parseOptionalDuration(time);
   const pace = kmN > 0 && dur ? paceOf({ km: kmN, durationSec: dur }) : undefined;
 
   function submit() {
-    if (!(kmN > 0)) return setError("Inserisci i km (es. 8,5).");
-    if (!dur) return setError("Tempo non valido: usa mm:ss oppure h:mm:ss (es. 48:30).");
+    if (!Number.isFinite(kmN) || kmN < 0) return setError("Km non validi (es. 8,5).");
+    if (dur === undefined) return setError("Tempo non valido: minuti e secondi arrivano al massimo a 59.");
     const hrN = hr ? Number(hr) : undefined;
     if (hrN !== undefined && !(hrN >= 40 && hrN <= 230)) return setError("FC media non plausibile.");
     const run: Run = {
@@ -70,7 +72,7 @@ export function RunForm({
       kind,
       km: kmN,
       durationSec: dur,
-      avgPaceSecPerKm: Math.round(dur / kmN),
+      ...(kmN > 0 && dur > 0 ? { avgPaceSecPerKm: Math.round(dur / kmN) } : {}),
       ...(hrN ? { avgHr: hrN } : {}),
       ...(gain ? { elevationGainM: Number(gain) } : {}),
       ...(feeling ? { feeling } : {}),
@@ -103,9 +105,10 @@ export function RunForm({
         </div>
       ) : null}
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Km"><input inputMode="decimal" placeholder="8,5" className={inputCls} value={km} onChange={(e) => setKm(e.target.value)} /></Field>
-        <Field label="Tempo" hint="mm:ss o h:mm:ss"><input inputMode="numeric" placeholder="48:30" className={inputCls} value={time} onChange={(e) => setTime(e.target.value)} /></Field>
+        <Field label="Km"><input inputMode="decimal" placeholder={plannedKm ? String(plannedKm).replace(".", ",") : "8,5"} className={inputCls} value={km} onChange={(e) => setKm(e.target.value)} /></Field>
+        <Field label="Tempo" hint="Solo cifre: 4830 diventa 48:30"><TimeInput placeholder="48:30" value={time} onChange={setTime} /></Field>
       </div>
+      <p className="px-1 text-xs text-zinc-500">Tutti i campi sono facoltativi: puoi salvare anche solo &quot;fatto&quot;.</p>
       {pace ? <p className="px-1 text-sm text-zinc-500">Passo medio: <span className="font-semibold">{formatPaceOrDash(pace)}/km</span></p> : null}
       <div className="grid grid-cols-2 gap-3">
         <Field label="FC media"><input inputMode="numeric" placeholder="bpm" className={inputCls} value={hr} onChange={(e) => setHr(e.target.value)} /></Field>

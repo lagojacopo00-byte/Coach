@@ -83,3 +83,19 @@ describe("seduta segnata non fatta", () => {
     expect(s.doneRuns).toBe(0);
   });
 });
+
+describe("passo senza dati", () => {
+  it("senza km o senza tempo il passo non c'è (niente 0:00/km)", () => {
+    expect(paceOf({ km: 0, durationSec: 1800 })).toBeUndefined();
+    expect(paceOf({ km: 6, durationSec: 0 })).toBeUndefined();
+    expect(paceOf({ km: 6, durationSec: 0, avgPaceSecPerKm: 300 })).toBeUndefined();
+    expect(paceOf({ km: 6, durationSec: 1800 })).toBe(300);
+  });
+  it("una corsa senza dati pesa 0 km sulla settimana", () => {
+    const w = PLAN_WEEKS[0];
+    const r = { id: "z", date: "2026-11-24", kind: "easy" as const, km: 0, durationSec: 0, pain: 0 };
+    const s = weekSummary(w, [r], "2026-11-27");
+    expect(s.doneRuns).toBe(1);
+    expect(s.actualKm).toBe(0);
+  });
+});
