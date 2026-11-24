@@ -17,7 +17,7 @@ const raw = (over: Record<string, unknown> = {}) => ({
 describe("mapStravaActivity", () => {
   it("una corsa: km, tempo, FC, dislivello, data locale", () => {
     expect(mapStravaActivity(raw())).toEqual({
-      id: 111, name: "Corsa mattutina", sportType: "Run", date: "2026-11-24", km: 5.91, durationSec: 2499, avgHr: 137, elevationGainM: 30,
+      source: "strava", id: 111, name: "Corsa mattutina", sportType: "Run", date: "2026-11-24", km: 5.91, durationSec: 2499, avgHr: 137, elevationGainM: 30,
     });
   });
   it("trail e corsa virtuale contano; bici, nuoto e camminata no", () => {

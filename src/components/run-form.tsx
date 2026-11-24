@@ -5,7 +5,7 @@ import { updateState } from "../data/store";
 import { formatDuration, formatPaceOrDash, KIND_LABEL, parseOptionalDuration } from "../domain/guidance";
 import { addRun } from "../domain/state";
 import { isRunSession, paceOf, RUN_KINDS } from "../domain/summary";
-import type { StravaActivity } from "../domain/strava";
+import type { ImportedActivity } from "../domain/strava";
 import type { IsoDate, PainLocation, PainType, Run, RunFeeling, SessionKind } from "../domain/types";
 import { RUN_FEELINGS } from "../domain/types";
 import { weekForDate, weekdayOf } from "../domain/week";
@@ -46,7 +46,7 @@ export function RunForm({
   plannedKm?: number;
   existing?: Run;
   /** Dati presi da Strava: precompilano km, tempo, FC e dislivello. */
-  prefill?: StravaActivity;
+  prefill?: ImportedActivity;
   dateEditable?: boolean;
   onSaved?: () => void;
   onCancel?: () => void;
@@ -77,8 +77,9 @@ export function RunForm({
     const hrN = hr ? Number(hr) : undefined;
     if (hrN !== undefined && !(hrN >= 40 && hrN <= 230)) return setError("FC media non plausibile.");
     const run: Run = {
-      id: existing?.id ?? (prefill ? `strava-${prefill.id}` : crypto.randomUUID()),
-      ...(existing?.stravaId ?? prefill?.id ? { stravaId: existing?.stravaId ?? prefill?.id } : {}),
+      id: existing?.id ?? (prefill ? `${prefill.source}-${prefill.id}` : crypto.randomUUID()),
+      ...(existing?.stravaId !== undefined ? { stravaId: existing.stravaId } : prefill?.source === "strava" ? { stravaId: prefill.id } : {}),
+      ...(existing?.garminId !== undefined ? { garminId: existing.garminId } : prefill?.source === "garmin" ? { garminId: prefill.id } : {}),
       date,
       kind,
       km: kmN,
@@ -105,7 +106,7 @@ export function RunForm({
     <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); submit(); }}>
       {prefill && !existing ? (
         <p className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm dark:border-orange-900 dark:bg-orange-950/40">
-          Dati da Strava ({prefill.name}). Controlla e aggiungi sensazioni e dolore.
+          Dati da {prefill.source === "garmin" ? "Garmin" : "Strava"} ({prefill.name}). Controlla e aggiungi sensazioni e dolore.
         </p>
       ) : null}
       {dateEditable ? (

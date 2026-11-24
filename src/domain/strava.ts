@@ -4,8 +4,12 @@ import type { IsoDate, Run, SessionKind } from "./types";
 
 export const STRAVA_RUN_TYPES: readonly string[] = ["Run", "TrailRun", "VirtualRun"];
 
-/** Una corsa di Strava ridotta ai dati che usa l'app. */
-export interface StravaActivity {
+/** Da dove arriva un'attività importata. */
+export type ImportSource = "strava" | "garmin";
+
+/** Una corsa importata (da Strava o da Garmin) ridotta ai dati che usa l'app. */
+export interface ImportedActivity {
+  source: ImportSource;
   id: number;
   name: string;
   sportType: string;
@@ -17,10 +21,13 @@ export interface StravaActivity {
   elevationGainM?: number;
 }
 
+/** Compatibilità: il nome di prima. */
+export type StravaActivity = ImportedActivity;
+
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 /** Da JSON di Strava ad attività: solo corse, con dati sensati. Undefined per tutto il resto (bici, nuoto, dati rotti). */
-export function mapStravaActivity(raw: unknown): StravaActivity | undefined {
+export function mapStravaActivity(raw: unknown): ImportedActivity | undefined {
   if (typeof raw !== "object" || raw === null) return undefined;
   const r = raw as Record<string, unknown>;
   const sport = typeof r.sport_type === "string" ? r.sport_type : typeof r.type === "string" ? r.type : "";
@@ -30,6 +37,7 @@ export function mapStravaActivity(raw: unknown): StravaActivity | undefined {
   const moving = isNum(r.moving_time) ? r.moving_time : 0;
   if (distance <= 0 && moving <= 0) return undefined;
   return {
+    source: "strava",
     id: r.id,
     name: typeof r.name === "string" ? r.name : "Corsa",
     sportType: sport,
@@ -42,14 +50,14 @@ export function mapStravaActivity(raw: unknown): StravaActivity | undefined {
 }
 
 /** Le corse di Strava di un giorno. */
-export function activitiesOn(activities: readonly StravaActivity[], date: IsoDate): StravaActivity[] {
+export function activitiesOn(activities: readonly ImportedActivity[], date: IsoDate): ImportedActivity[] {
   return activities.filter((a) => a.date === date);
 }
 
 /** Corsa dell'app da un'attività Strava. Sensazioni e dolore li aggiungi tu. */
-export function toRun(a: StravaActivity, kind: SessionKind): Run {
+export function toRun(a: ImportedActivity, kind: SessionKind): Run {
   return {
-    id: `strava-${a.id}`,
+    id: `${a.source}-${a.id}`,
     date: a.date,
     kind,
     km: a.km,
@@ -58,7 +66,7 @@ export function toRun(a: StravaActivity, kind: SessionKind): Run {
     ...(a.avgHr ? { avgHr: a.avgHr } : {}),
     ...(a.elevationGainM ? { elevationGainM: a.elevationGainM } : {}),
     pain: 0,
-    stravaId: a.id,
+    ...(a.source === "garmin" ? { garminId: a.id } : { stravaId: a.id }),
   };
 }
 
@@ -76,14 +84,18 @@ export interface ImportPlan {
  */
 export function planImport(
   runs: readonly Run[],
-  activities: readonly StravaActivity[],
-  kindFor: (a: StravaActivity) => SessionKind,
+  activities: readonly ImportedActivity[],
+  kindFor: (a: ImportedActivity) => SessionKind,
 ): ImportPlan {
-  const imported = new Set(runs.map((r) => r.stravaId).filter((x): x is number => x !== undefined));
-  const manualDays = new Set(runs.filter((r) => r.stravaId === undefined).map((r) => r.date));
+  const imported = new Set<string>();
+  for (const r of runs) {
+    if (r.stravaId !== undefined) imported.add(`strava:${r.stravaId}`);
+    if (r.garminId !== undefined) imported.add(`garmin:${r.garminId}`);
+  }
+  const manualDays = new Set(runs.filter((r) => r.stravaId === undefined && r.garminId === undefined).map((r) => r.date));
   const plan: ImportPlan = { toAdd: [], alreadyImported: 0, skippedSameDay: 0 };
   for (const a of [...activities].sort((x, y) => x.date.localeCompare(y.date) || x.id - y.id)) {
-    if (imported.has(a.id)) plan.alreadyImported++;
+    if (imported.has(`${a.source}:${a.id}`)) plan.alreadyImported++;
     else if (manualDays.has(a.date)) plan.skippedSameDay++;
     else plan.toAdd.push(toRun(a, kindFor(a)));
   }

@@ -42,7 +42,9 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] Palestra: serie decise dal coach (volume +1 su panca, tirata e alzate dalla sett. 5, solo con continuità), carico copiato su tutte le serie, salvataggio a ogni modifica con ripresa dell'allenamento
 - [x] Tempi e passi scritti solo con le cifre (4139 → 41:39) e corsa salvabile senza km, tempo o altri dati
 - [x] Import da Strava (Garmin sincronizza lì): collegamento OAuth, "Importa da Strava" nella seduta, import delle ultime corse; token in cookie httpOnly cifrato, chiavi solo su Vercel
-- [ ] Strava: servono STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET su Vercel (le crea Jacopo su strava.com/settings/api)
+- [x] Import da Garmin (Personal API, sola lettura): token dalla chiave, elenco attività, blocco con PIN (cookie firmato), diagnostica se non riconosce i campi
+- [ ] Garmin: servono GARMIN_API_KEY e GARMIN_APP_PIN su Vercel; al primo import verificare i nomi dei campi (non documentati pubblicamente)
+- [ ] Strava (alternativa): servono STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET su Vercel (le crea Jacopo su strava.com/settings/api)
 
 ## F5 PWA
 - [x] Manifest, icone, service worker

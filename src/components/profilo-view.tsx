@@ -19,6 +19,7 @@ import {
 } from "../domain/state";
 import { easyPaceRange, formatPace, hrZones, parsePace, thresholdPaceRange } from "../domain/zones";
 import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, H2, inputCls, PageTitle } from "./ui";
+import { GarminSection } from "./garmin-card";
 import { StravaSection } from "./strava-card";
 import { TimeInput } from "./time-input";
 import { WithCoach } from "./with-coach";
@@ -34,6 +35,7 @@ export function ProfiloView() {
           <StopSection state={state} today={today} />
           <Onboarding key={String(state.onboardingDone)} state={state} today={today} />
           <ExtraEasy state={state} />
+          <GarminSection />
           <StravaSection />
           <Zones state={state} />
           <ThresholdTest state={state} today={today} />

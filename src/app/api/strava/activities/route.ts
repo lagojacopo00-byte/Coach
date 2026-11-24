@@ -6,14 +6,15 @@ const DAY = 86_400;
 
 /** Le tue corse da Strava dal timestamp `after` (default: ultimi 30 giorni). Rinnova i token se servono. */
 export async function GET(request: NextRequest) {
+  // Leggo SEMPRE la richiesta per prima (route dinamica, mai prerenderizzata alla build).
+  const sealed = request.cookies.get(STRAVA_COOKIE)?.value;
+  const asked = Number(request.nextUrl.searchParams.get("after"));
   const env = readEnv();
   if (!env) return Response.json({ error: "not_configured" }, { status: 503, headers: NO_STORE });
-  const sealed = request.cookies.get(STRAVA_COOKIE)?.value;
   const tokens = sealed ? unseal(sealed, env.clientSecret) : undefined;
   if (!tokens) return Response.json({ error: "not_connected" }, { status: 401, headers: NO_STORE });
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const asked = Number(request.nextUrl.searchParams.get("after"));
   // Mai oltre 400 giorni indietro: limita le richieste a Strava.
   const after = Number.isFinite(asked) && asked > 0 ? Math.max(Math.floor(asked), nowSec - 400 * DAY) : nowSec - 30 * DAY;
 

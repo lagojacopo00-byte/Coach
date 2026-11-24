@@ -25,9 +25,23 @@ npm run build && npm start
 
 Per provare l'app in un'altra settimana: Profilo → Strumenti → Simula la data.
 
-## Strava (e quindi Garmin)
+## Garmin (consigliato)
 
-Il Garmin sincronizza le corse su Strava; l'app le importa da lì (km, tempo, FC media, dislivello), le sensazioni e il dolore li aggiungi tu. L'app legge soltanto: non scrive nulla su Strava.
+Import diretto dal Personal API di Garmin Connect: sola lettura, uso personale, nessun account in più. Importa km, tempo, FC media e dislivello; sensazioni e dolore li aggiungi tu.
+
+Configurazione (una volta sola):
+1. Dal **sito** di Garmin Connect (non l'app): Impostazioni → Personal API → crea la chiave. Si vede una volta sola e scade (30, 90, 180 giorni o 1 anno a tua scelta; Garmin scrive una settimana prima).
+2. Su Vercel, nel progetto: Settings → Environment Variables. Aggiungi `GARMIN_API_KEY` (la chiave) e `GARMIN_APP_PIN` (un PIN o una frase tua, **almeno 8 caratteri**).
+3. Redeploy (Deployments → Redeploy).
+4. In Profilo → Garmin scrivi il PIN (una volta per telefono). Poi **Importa da Garmin** nella seduta del giorno, oppure **Importa le corse degli ultimi 30 giorni** dal Profilo.
+
+Sicurezza: l'indirizzo del sito è pubblico e la chiave dà accesso ai tuoi dati, quindi le route Garmin si aprono solo col PIN (cookie `httpOnly` firmato, 90 giorni). Chi non ha il PIN non legge nulla. Cambiare `GARMIN_APP_PIN` (o la chiave) invalida tutte le sessioni già aperte; «Blocca» nel Profilo toglie l'accesso solo su quel telefono. La chiave non lascia mai il server. Quando la chiave scade l'app lo dice: ne crei una nuova e aggiorni `GARMIN_API_KEY`.
+
+Nota: Garmin non pubblica in modo leggibile i nomi dei campi delle attività. L'app usa quelli di Garmin Connect; se al primo import non riconosce nulla, mostra i campi che ha ricevuto (solo i nomi) così si correggono.
+
+## Strava (alternativa)
+
+Se preferisci passare da Strava (il Garmin sincronizza lì le corse), l'app le importa da lì (km, tempo, FC media, dislivello), le sensazioni e il dolore li aggiungi tu. L'app legge soltanto: non scrive nulla su Strava.
 
 Configurazione (una volta sola):
 1. Su strava.com/settings/api crea un'app. Come «Authorization Callback Domain» metti il dominio del sito (es. `coach-beta.vercel.app`, senza `https://`).
