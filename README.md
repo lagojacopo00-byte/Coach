@@ -25,6 +25,18 @@ npm run build && npm start
 
 Per provare l'app in un'altra settimana: Profilo → Strumenti → Simula la data.
 
+## Strava (e quindi Garmin)
+
+Il Garmin sincronizza le corse su Strava; l'app le importa da lì (km, tempo, FC media, dislivello), le sensazioni e il dolore li aggiungi tu. L'app legge soltanto: non scrive nulla su Strava.
+
+Configurazione (una volta sola):
+1. Su strava.com/settings/api crea un'app. Come «Authorization Callback Domain» metti il dominio del sito (es. `coach-beta.vercel.app`, senza `https://`).
+2. Su Vercel, nel progetto: Settings → Environment Variables. Aggiungi `STRAVA_CLIENT_ID` e `STRAVA_CLIENT_SECRET` con i valori di Strava (Production). La chiave segreta resta sul server, mai sul telefono.
+3. Redeploy (Deployments → Redeploy).
+4. In Profilo → Strava e Garmin: **Collega Strava**. Poi **Importa da Strava** nella seduta del giorno, oppure **Importa le corse degli ultimi 30 giorni** dal Profilo.
+
+I token di accesso stanno in un cookie `httpOnly` cifrato (AES-256-GCM) nel tuo browser; sul server non si salva nulla. Le corse già importate non si duplicano e i giorni con una corsa scritta a mano non vengono toccati. Per scollegare: Profilo → Scollega Strava (revoca anche l'accesso su Strava).
+
 ## Dati
 
 Salvati sul dispositivo (localStorage). Esporta un backup da Profilo → Backup. Il salvataggio su Supabase è in `PLAN.md` (F3).

@@ -14,6 +14,9 @@ import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason, type Week
 import { IconCheck, IconX } from "./icons";
 import { KIND_STYLE } from "./kind-style";
 import { RunForm } from "./run-form";
+import { fetchStravaActivities, errorText } from "../data/strava-client";
+import { activitiesOn, type StravaActivity } from "../domain/strava";
+import { useStravaStatus } from "./strava-card";
 import { btnDanger, btnPrimary, btnSecondary } from "./ui";
 
 const REASON_LABEL: Record<SkipReason, string> = {
@@ -38,6 +41,7 @@ export function SessionPanel({
 }) {
   const { session, date, run, skip } = status;
   const [mode, setMode] = useState<"idle" | "done" | "skip">("idle");
+  const [prefill, setPrefill] = useState<StravaActivity | undefined>();
   const style = KIND_STYLE[session.kind];
   const brief = sessionBrief(session);
   const hint = paceHint(session, state.profile);
@@ -79,7 +83,8 @@ export function SessionPanel({
             defaultKind={session.kind}
             plannedKm={session.km}
             existing={run}
-            onSaved={() => setMode("idle")}
+            prefill={prefill}
+            onSaved={() => { setPrefill(undefined); setMode("idle"); }}
             onCancel={() => setMode("idle")}
           />
         </div>
@@ -127,6 +132,8 @@ export function SessionPanel({
       ) : (
         <p className="mt-4 text-sm text-zinc-500">Potrai registrarla {date === today ? "oggi" : `da ${shortDate(date)}`}.</p>
       )}
+
+      {isRun && mode === "idle" && canLog && !run ? <StravaImport date={date} onPick={(a) => { setPrefill(a); setMode("done"); }} /> : null}
     </div>
   );
 }
@@ -189,6 +196,50 @@ function GymBlock({ state, date, weekday }: { state: AppState; date: IsoDate; we
       <Link href="/palestra" className={`${done ? btnSecondary : btnPrimary} mt-2 w-full`}>
         {done ? "Rivedi la scheda" : `Apri la scheda: ${workout.name}`}
       </Link>
+    </div>
+  );
+}
+
+/** "Importa da Strava": cerca le corse di quel giorno e precompila il form. Compare solo se Strava è collegato. */
+function StravaImport({ date, onPick }: { date: IsoDate; onPick: (a: StravaActivity) => void }) {
+  const status = useStravaStatus();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | undefined>();
+  const [choices, setChoices] = useState<StravaActivity[]>([]);
+  if (!status?.connected) return null;
+
+  async function load() {
+    setBusy(true);
+    setMsg(undefined);
+    // Un giorno di margine: Strava ragiona in UTC, le attività le filtro per data locale.
+    const after = Date.parse(`${date}T00:00:00Z`) / 1000 - 86_400;
+    const r = await fetchStravaActivities(after);
+    setBusy(false);
+    if (!r.ok) return setMsg(errorText(r.error));
+    const found = activitiesOn(r.activities, date);
+    if (found.length === 0) return setMsg(`Nessuna corsa su Strava il ${shortDate(date)}. Il Garmin deve aver finito di sincronizzare.`);
+    if (found.length === 1) return onPick(found[0]);
+    setChoices(found);
+  }
+
+  return (
+    <div className="mt-3">
+      <button type="button" className={`${btnSecondary} w-full`} disabled={busy} onClick={load}>
+        {busy ? "Cerco su Strava…" : "Importa da Strava"}
+      </button>
+      {choices.length > 0 ? (
+        <ul className="mt-2 space-y-2">
+          {choices.map((a) => (
+            <li key={a.id}>
+              <button type="button" className={`${btnSecondary} w-full justify-between`} onClick={() => onPick(a)}>
+                <span className="truncate">{a.name}</span>
+                <span className="ml-2 shrink-0 text-sm text-zinc-500">{a.km.toFixed(1).replace(".", ",")} km</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {msg ? <p role="status" className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{msg}</p> : null}
     </div>
   );
 }

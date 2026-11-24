@@ -19,6 +19,7 @@ import {
 } from "../domain/state";
 import { easyPaceRange, formatPace, hrZones, parsePace, thresholdPaceRange } from "../domain/zones";
 import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, H2, inputCls, PageTitle } from "./ui";
+import { StravaSection } from "./strava-card";
 import { TimeInput } from "./time-input";
 import { WithCoach } from "./with-coach";
 
@@ -33,6 +34,7 @@ export function ProfiloView() {
           <StopSection state={state} today={today} />
           <Onboarding key={String(state.onboardingDone)} state={state} today={today} />
           <ExtraEasy state={state} />
+          <StravaSection />
           <Zones state={state} />
           <ThresholdTest state={state} today={today} />
           <HalfTest state={state} today={today} />
@@ -125,7 +127,7 @@ function Onboarding({ state, today }: { state: AppState; today: string }) {
             <Field label="Scarpe"><input className={inputCls} value={shoes} onChange={(e) => setShoes(e.target.value)} /></Field>
             <Field label="Km scarpe"><input inputMode="numeric" className={inputCls} value={shoesKm} onChange={(e) => setShoesKm(e.target.value)} /></Field>
           </div>
-          <p className="text-xs text-zinc-500">Giorni fissi: corsa mar/gio/dom, palestra lun/ven (il piano è costruito su questi).</p>
+          <p className="text-xs text-zinc-500">Giorni fissi: corsa mar/gio/dom, palestra lun/mer (il piano è costruito su questi).</p>
           {errors.map((e) => <p key={e} role="alert" className="text-sm font-medium text-red-600">{e}</p>)}
           <button type="submit" className={`${btnPrimary} w-full`}>Salva</button>
           {saved ? <p className="text-center text-sm text-emerald-700 dark:text-emerald-300">Salvato.</p> : null}

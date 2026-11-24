@@ -41,7 +41,8 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - [x] Scheda palestra concordata: due full body (A lun, B mer), gambe spezzate, prevenzione tibie/polpacci; scarico/tapering/qualità dura dosano le serie
 - [x] Palestra: serie decise dal coach (volume +1 su panca, tirata e alzate dalla sett. 5, solo con continuità), carico copiato su tutte le serie, salvataggio a ogni modifica con ripresa dell'allenamento
 - [x] Tempi e passi scritti solo con le cifre (4139 → 41:39) e corsa salvabile senza km, tempo o altri dati
-- [ ] Import dati Garmin (serve un export reale per testare il formato)
+- [x] Import da Strava (Garmin sincronizza lì): collegamento OAuth, "Importa da Strava" nella seduta, import delle ultime corse; token in cookie httpOnly cifrato, chiavi solo su Vercel
+- [ ] Strava: servono STRAVA_CLIENT_ID e STRAVA_CLIENT_SECRET su Vercel (le crea Jacopo su strava.com/settings/api)
 
 ## F5 PWA
 - [x] Manifest, icone, service worker
