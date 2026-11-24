@@ -24,7 +24,7 @@ export function WeekPanel({ week, state, today }: { week: Week; state: AppState;
       <Card>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div><p className="text-2xl font-bold">{v.summary.doneRuns}/{v.summary.plannedRuns}</p><p className="text-xs text-zinc-500">corse</p></div>
-          <div><p className="text-2xl font-bold">{v.actualKm.toFixed(1)}</p><p className="text-xs text-zinc-500">km (previsti ~{v.plannedKm.toFixed(0)})</p></div>
+          <div><p className="text-2xl font-bold">{v.actualKm.toFixed(1).replace(".", ",")}</p><p className="text-xs text-zinc-500">km (previsti ~{v.plannedKm.toFixed(0)})</p></div>
           <div><p className="text-2xl font-bold">{change !== undefined ? `${change > 0 ? "+" : ""}${change.toFixed(0)}%` : "–"}</p><p className="text-xs text-zinc-500">vs sett. prec.</p></div>
         </div>
         <p className="mt-3 text-sm">Sensazioni: {feelings.length > 0 ? feelings.map(([k, n]) => `${n}× ${k}`).join(", ") : "non registrate"}.</p>
@@ -32,7 +32,7 @@ export function WeekPanel({ week, state, today }: { week: Week; state: AppState;
           Dolori: {v.summary.painRuns.length === 0 ? "nessuno segnalato" : v.summary.painRuns.map((r) => `${shortDate(r.date)} ${r.pain}/10${r.painLocation ? ` ${r.painLocation}` : ""}`).join("; ")}.
         </p>
         {skipped > 0 ? <p className="mt-1 text-sm">Sedute non fatte: {skipped}. Non si recuperano.</p> : null}
-        {v.summary.extraRuns.length > 0 ? <p className="mt-1 text-sm text-zinc-500">Corse extra: {v.summary.extraRuns.map((r) => (r.km > 0 ? `${shortDate(r.date)} ${r.km.toFixed(1)} km` : shortDate(r.date))).join(", ")}.</p> : null}
+        {v.summary.extraRuns.length > 0 ? <p className="mt-1 text-sm text-zinc-500">Corse extra: {v.summary.extraRuns.map((r) => (r.km > 0 ? `${shortDate(r.date)} ${r.km.toFixed(1).replace(".", ",")} km` : shortDate(r.date))).join(", ")}.</p> : null}
       </Card>
       <AdviceList advices={v.advices} />
     </div>

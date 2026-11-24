@@ -57,3 +57,5 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - F3 Supabase: serve un progetto Supabase (URL + anon key) creato da Jacopo; la task è "supervisionata" e tocca dati sensibili (salute). Fino ad allora i dati stanno su localStorage, con backup manuale.
 - R1: il piano base supera il +10% nelle sett. 2, 6, 8, 12, 15 (dopo settimane leggere o con la gara). Il seed non si tocca: l'app avvisa solo sui km reali. Da rivedere con Jacopo.
 - Dopo i test fisici (soglia 3/12, mezza 14/02) i risultati si inseriscono in Profilo: ricalcolano zone/ritmi (R5) e valutano il target (R7). Eventuali modifiche al piano base vanno fatte a mano su `plan.seed.ts`.
+
+- [x] Revisione UI (24/11): Oggi con la settimana e le V verdi; Settimane con leggenda in fondo; Corse con aggiungi/km settimanali/analisi/elenco colorato/dati interessanti; Profilo a sezioni chiuse

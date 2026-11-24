@@ -17,11 +17,11 @@ npm run build && npm start
 
 ## Come usarla
 
-- **Oggi**: l'allenamento del giorno (dalla settimana 5 il venerdì può comparire una easy facoltativa di 35', solo se tibie/polpacci non danno segnali; si disattiva da Profilo), con ritmi e FC. Tocca **Fatto** (km, tempo, FC, D+, sensazioni, dolore: tutto facoltativo, puoi salvare anche solo "fatto"; il tempo si scrive solo con le cifre, 4139 diventa 41:39) o **Non fatto** (con motivo). Sotto, la settimana giorno per giorno e il check-in "gambe pesanti o dolore?".
-- **Settimane**: tutte le 16 settimane in una griglia (righe = settimane, colonne = lun–dom), colorate per tipo di seduta (Easy, Lungo, Salite, Soglia, RM, Test/gara, Pesi). Tocca un giorno per dettagli e log, tocca il numero della settimana per il riepilogo. In fondo, l'andamento: carico settimanale e lungo, pianificato vs fatto.
-- **Palestra**: la scheda (due full body con le gambe spezzate: A il lunedì, B il mercoledì; in scarico una serie in meno, nelle ultime due settimane gambe dimezzate). Registri pesi e ripetizioni per serie (scrivi il carico una volta e si copia su tutte le serie; si salva da solo a ogni modifica); le serie le decide il coach (volume che cresce, scarico, tapering). La volta dopo l'app ti dice se salire di peso (doppia progressione: quando chiudi tutte le serie al massimo delle ripetizioni sali di peso, altrimenti resti e punti a più ripetizioni). La scheda si modifica dall'app.
-- **Corse**: per registrare una corsa fuori piano e vedere il registro.
-- **Profilo**: dati di onboarding, zone FC, **test soglia** (ricalcola zone e ritmi), **mezza di prova** (valuta il target), backup, data simulata.
+- **Oggi**: la settimana giorno per giorno, con una **V verde** su ciò che è fatto (corse e palestra). Tocca un giorno per registrarlo (**Fatto** con km, tempo, FC, D+, sensazioni, dolore, tutto facoltativo; oppure **Non fatto** con motivo), per modificarlo o eliminarlo. Sotto: «Da fare a breve» e «Gambe pesanti o dolore?».
+- **Settimane**: tutte le 16 settimane in una griglia (righe = settimane, colonne = lun–dom), colorate per tipo di seduta (leggenda sotto il calendario). In fondo l'andamento di carico e lungo.
+- **Palestra**: la scheda (due full body con le gambe spezzate: A il lunedì, B il mercoledì). Registri pesi e ripetizioni per serie (il carico si copia su tutte le serie; si salva da solo a ogni modifica); le serie le decide il coach (volume che cresce, scarico, tapering).
+- **Corse**: **Aggiungi corsa** (a mano o importando da Garmin/Strava), i **chilometri settimanali** con analisi, **tutte le corse** raggruppate per settimana e colorate per tipo (tocca una corsa per modificarla o eliminarla), e in fondo dati interessanti (corsa più lunga, settimana migliore, passo per tipo, FC negli easy…).
+- **Profilo**: tutto in sezioni chiuse, si apre quella che serve: dati personali (una volta sola), easy facoltativa, Garmin, Strava, zone e ritmi, test soglia, mezza di prova, backup, strumenti.
 
 Per provare l'app in un'altra settimana: Profilo → Strumenti → Simula la data.
 
