@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { updateState } from "../data/store";
 import { easyPaceOf } from "../domain/coach";
-import { detailText, formatRunSummary, KIND_LABEL, paceHint, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
+import { detailText, formatRunSummary, KIND_LABEL, paceHint, sessionBrief, shortDate, WEEKDAY_LABEL, WEEKDAY_SHORT } from "../domain/guidance";
 import { gelAdvice } from "../domain/rules";
 import Link from "next/link";
 import { workoutOn } from "../domain/gym";
-import { addSkip, gymPlanOf, removeRun, removeSkip, type AppState } from "../domain/state";
+import { applySwaps, swapTargets } from "../domain/moves";
+import { addSkip, gymPlanOf, moveDay, removeRun, removeSkip, type AppState } from "../domain/state";
 import { logVolume } from "../domain/gym";
 import { isRunSession, type SessionStatus } from "../domain/summary";
 import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason, type Weekday } from "../domain/types";
@@ -17,7 +18,7 @@ import { RunForm } from "./run-form";
 import { fetchGarminActivities, garminErrorText } from "../data/garmin-client";
 import { fetchStravaActivities, errorText } from "../data/strava-client";
 import { activitiesOn, type ImportedActivity } from "../domain/strava";
-import { addDays } from "../domain/week";
+import { addDays, weekForDate } from "../domain/week";
 import { useGarminStatus } from "./garmin-card";
 import { useStravaStatus } from "./strava-card";
 import { btnDanger, btnPrimary, btnSecondary } from "./ui";
@@ -36,11 +37,14 @@ export function SessionPanel({
   adjustment,
   state,
   today,
+  onMoved,
 }: {
   status: SessionStatus;
   adjustment?: Adjustment;
   state: AppState;
   today: IsoDate;
+  /** Chiamata dopo uno spostamento (di solito chiude la scheda). */
+  onMoved?: () => void;
 }) {
   const { session, date, run, skip } = status;
   const [mode, setMode] = useState<"idle" | "done" | "skip">("idle");
@@ -64,6 +68,7 @@ export function SessionPanel({
         </p>
         {brief.sub ? <p className="text-sm font-medium opacity-80">{brief.sub}</p> : null}
         <p className="mt-2 text-sm">{detailText(session)}</p>
+        {session.from && session.from !== session.weekday ? <p className="mt-2 text-xs font-medium opacity-80">Spostata da {WEEKDAY_LABEL[session.from].toLowerCase()}</p> : null}
       </div>
 
       {adjustment?.rule === "R8" ? (
@@ -76,7 +81,7 @@ export function SessionPanel({
       {hint ? <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{hint}</p> : null}
       {gel ? <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{gel.message}</p> : null}
 
-      {session.kind === "gym" ? <GymBlock state={state} date={date} weekday={session.weekday} /> : null}
+      {session.kind === "gym" ? <GymBlock state={state} date={date} weekday={session.from ?? session.weekday} /> : null}
 
       {!isRun ? null : mode === "done" ? (
         <div className="mt-4">
@@ -135,6 +140,8 @@ export function SessionPanel({
       ) : (
         <p className="mt-4 text-sm text-zinc-500">Potrai registrarla {date === today ? "oggi" : `da ${shortDate(date)}`}.</p>
       )}
+
+      {mode === "idle" ? <MoveChips status={status} state={state} today={today} onMoved={onMoved} /> : null}
 
       {isRun && mode === "idle" && canLog && !run ? <ActivityImport date={date} onPick={(a) => { setPrefill(a); setMode("done"); }} /> : null}
     </div>
@@ -252,6 +259,37 @@ function ActivityImport({ date, onPick }: { date: IsoDate; onPick: (a: ImportedA
         </ul>
       ) : null}
       {msg ? <p role="status" className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{msg}</p> : null}
+    </div>
+  );
+}
+
+/** Modo alternativo al trascinamento: scegli il giorno in cui spostare questa seduta. */
+function MoveChips({ status, state, today, onMoved }: { status: SessionStatus; state: AppState; today: IsoDate; onMoved?: () => void }) {
+  const week = weekForDate(status.date);
+  if (!week || status.session.kind === "rest") return null;
+  const current = applySwaps(week, state.swaps.filter((x) => x.weekIndex === week.index));
+  const from = status.session.weekday;
+  const targets = swapTargets({ week: current, today, runs: state.runs, gymLogs: state.gymLogs, skips: state.skips }, from);
+  if (targets.length === 0) return null;
+  return (
+    <div className="mt-4">
+      <p className="mb-2 text-sm font-semibold">Sposta in un altro giorno</p>
+      <div className="flex flex-wrap gap-2">
+        {targets.map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={`${btnSecondary} !min-h-10 !px-3`}
+            aria-label={`Sposta a ${WEEKDAY_LABEL[t]}`}
+            onClick={() => {
+              updateState((s) => moveDay(s, week.index, from, t, today));
+              onMoved?.();
+            }}
+          >
+            {WEEKDAY_SHORT[t]}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

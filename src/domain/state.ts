@@ -1,7 +1,9 @@
 import { defaultGymPlan, draftToLog, validateGymLog, validateGymPlan, type GymDraft, type GymLog, type Workout } from "./gym";
 import { applyRecalculation, recalcFromThresholdTest, type Recalculation, type ThresholdTestInput } from "./rules";
 import { defaultProfile, type OnboardingInput } from "./profile";
-import type { CheckIn, IsoDate, Profile, Run, Skip } from "./types";
+import { applySwaps, whyNotSwap, type DaySwap } from "./moves";
+import { PLAN_WEEKS } from "./plan.seed";
+import type { CheckIn, IsoDate, Profile, Run, Skip, Weekday } from "./types";
 
 export const STATE_VERSION = 1;
 
@@ -37,6 +39,8 @@ export interface AppState {
   /** Scheda di palestra personalizzata; assente = quella di partenza. */
   gymPlan?: Workout[];
   gymLogs: GymLog[];
+  /** Giorni spostati dall'utente (scambi di due giorni nella stessa settimana). */
+  swaps: DaySwap[];
   /** Allenamenti di palestra in corso: salvati a ogni modifica. */
   gymDrafts: GymDraft[];
 }
@@ -49,6 +53,7 @@ export function initialState(): AppState {
     checkIns: [],
     skips: [],
     gymLogs: [],
+    swaps: [],
     gymDrafts: [],
     checklistDone: [],
     onboardingDone: false,
@@ -162,6 +167,7 @@ export function parseState(raw: unknown): AppState | undefined {
     skips: Array.isArray(o.skips) ? o.skips : [],
     gymLogs: Array.isArray(o.gymLogs) ? o.gymLogs : [],
     gymDrafts: Array.isArray(o.gymDrafts) ? o.gymDrafts : [],
+    swaps: Array.isArray(o.swaps) ? o.swaps : [],
     onboardingDone: o.onboardingDone === true,
   } as AppState;
 }
@@ -225,4 +231,28 @@ function prunedBefore(date: IsoDate): IsoDate {
 /** Chiudi l'allenamento: la bozza non serve più (i dati restano nello storico). */
 export function finishGymDraft(s: AppState, date: IsoDate, workoutId: string): AppState {
   return { ...s, gymDrafts: s.gymDrafts.filter((d) => !(d.date === date && d.workoutId === workoutId)) };
+}
+
+/**
+ * Sposta un giorno: scambia `a` e `b` nella settimana. Solo oggi e giorni futuri, mai giorni già fatti.
+ * Lancia RangeError con il motivo se non si può.
+ */
+export function moveDay(s: AppState, weekIndex: number, a: Weekday, b: Weekday, today: IsoDate): AppState {
+  const base = PLAN_WEEKS[weekIndex];
+  if (!base) throw new RangeError("Settimana non valida.");
+  const current = applySwaps(base, s.swaps.filter((x) => x.weekIndex === weekIndex));
+  const why = whyNotSwap({ week: current, today, runs: s.runs, gymLogs: s.gymLogs, skips: s.skips }, a, b);
+  if (why) throw new RangeError(why);
+  return { ...s, swaps: [...s.swaps, { weekIndex, a, b }] };
+}
+
+/** Torna al piano base per quella settimana. */
+export function resetWeekMoves(s: AppState, weekIndex: number): AppState {
+  return { ...s, swaps: s.swaps.filter((x) => x.weekIndex !== weekIndex) };
+}
+
+/** Annulla l'ultimo spostamento di quella settimana. */
+export function undoLastMove(s: AppState, weekIndex: number): AppState {
+  const idx = s.swaps.map((x) => x.weekIndex).lastIndexOf(weekIndex);
+  return idx < 0 ? s : { ...s, swaps: s.swaps.filter((_, i) => i !== idx) };
 }

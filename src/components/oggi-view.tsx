@@ -5,10 +5,12 @@ import { useState } from "react";
 import { CHECKLIST_SEED, dueSoon } from "../domain/checklist.seed";
 import { KIND_LABEL, sessionBrief, shortDate, WEEKDAY_LABEL } from "../domain/guidance";
 import { PHASES } from "../domain/plan.seed";
-import { allCheckIns } from "../domain/state";
+import { updateState } from "../data/store";
+import { allCheckIns, moveDay, resetWeekMoves, undoLastMove } from "../domain/state";
 import { isRunSession, type SessionStatus } from "../domain/summary";
 import { todayView, weekView } from "../domain/views";
 import { diffDays, nextWeek, weekdayOf } from "../domain/week";
+import { WeekList } from "./week-list";
 import { CheckInForm } from "./checkin-form";
 import { IconChevron, IconX } from "./icons";
 import { KIND_STYLE } from "./kind-style";
@@ -26,7 +28,6 @@ function DayRow({ status, done, adjusted, onOpen }: { status: SessionStatus; don
   const isToday = state === "today";
   const missed = isRunSession(session) && (state === "skipped" || state === "missed");
   return (
-    <li>
       <button
         type="button"
         onClick={onOpen}
@@ -39,6 +40,7 @@ function DayRow({ status, done, adjusted, onOpen }: { status: SessionStatus; don
             {isToday ? " · oggi" : ""}
             {adjusted ? " · cambiata dal coach" : ""}
             {session.optional ? " · facoltativa" : ""}
+            {session.from && session.from !== session.weekday ? " · spostata" : ""}
           </span>
           <span className="block font-semibold">
             {KIND_LABEL[session.kind]}
@@ -60,12 +62,12 @@ function DayRow({ status, done, adjusted, onOpen }: { status: SessionStatus; don
           )}
         </span>
       </button>
-    </li>
   );
 }
 
 export function OggiView() {
   const [open, setOpen] = useState<string | undefined>();
+  const [note, setNote] = useState<{ text: string; undo?: { weekIndex: number } } | undefined>();
   return (
     <WithCoach>
       {({ state, today, simDate }) => {
@@ -98,15 +100,46 @@ export function OggiView() {
 
             {wv ? (
               <>
-                <ul className="space-y-2">
-                  {statuses.map((s) => (
-                    <DayRow key={s.date} status={s} done={isDone(s)} adjusted={adjustmentOn(s.date) !== undefined && adjustmentOn(s.date)?.rule !== "R8"} onOpen={() => setOpen(s.date)} />
-                  ))}
-                </ul>
+                <WeekList
+                  items={statuses.map((s) => ({
+                    date: s.date,
+                    movable: s.session.kind !== "rest" && s.date >= today && !isDone(s) && s.state !== "skipped",
+                    content: <DayRow status={s} done={isDone(s)} adjusted={adjustmentOn(s.date) !== undefined && adjustmentOn(s.date)?.rule !== "R8"} onOpen={() => setOpen(s.date)} />,
+                  }))}
+                  onBlocked={(date) => setNote({ text: statuses.find((x) => x.date === date)?.session.kind === "rest" ? "Il riposo non si sposta: sposta l'allenamento che vuoi mettere al suo posto." : "Questo giorno è passato o già fatto: non si sposta." })}
+                  onMove={(from, to) => {
+                    if (!displayWeek) return;
+                    const fromStatus = statuses.find((x) => x.date === from);
+                    try {
+                      updateState((st) => moveDay(st, displayWeek.index, weekdayOf(from), weekdayOf(to), today));
+                      setNote({ text: `Spostato a ${WEEKDAY_LABEL[weekdayOf(to)].toLowerCase()}: ${fromStatus ? KIND_LABEL[fromStatus.session.kind] : "giorno"}.`, undo: { weekIndex: displayWeek.index } });
+                    } catch (e) {
+                      setNote({ text: e instanceof Error ? e.message : "Non si può spostare." });
+                    }
+                  }}
+                />
+                {note ? (
+                  <p role="status" className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-zinc-100 px-3 py-2 text-sm dark:bg-zinc-800">
+                    <span>{note.text}</span>
+                    {note.undo ? (
+                      <button type="button" className="shrink-0 font-semibold text-orange-600 dark:text-orange-400" onClick={() => { const w = note.undo!.weekIndex; updateState((st) => undoLastMove(st, w)); setNote({ text: "Spostamento annullato." }); }}>
+                        Annulla
+                      </button>
+                    ) : null}
+                  </p>
+                ) : null}
                 <p className="mt-3 text-center text-sm text-zinc-500">
                   {wv.actualKm.toFixed(1).replace(".", ",")} km fatti · ~{wv.plannedKm.toFixed(0)} km previsti ·{" "}
                   <Link href="/settimane" className="font-medium text-orange-600 dark:text-orange-400">tutte le settimane</Link>
                 </p>
+                {wv.effective.moves.length > 0 ? (
+                  <p className="mt-2 text-center text-sm text-zinc-500">
+                    Settimana modificata ·{" "}
+                    <button type="button" className="font-medium text-orange-600 dark:text-orange-400" onClick={() => { if (displayWeek) { const w = displayWeek.index; updateState((st) => resetWeekMoves(st, w)); setNote(undefined); } }}>
+                      torna al piano
+                    </button>
+                  </p>
+                ) : null}
                 {v.extraEasyNote ? <p className="mt-2 px-1 text-sm text-zinc-600 dark:text-zinc-400">Easy facoltativa non attiva: {v.extraEasyNote}</p> : null}
               </>
             ) : (
@@ -139,7 +172,7 @@ export function OggiView() {
 
             {openStatus ? (
               <Sheet title={`${WEEKDAY_LABEL[openStatus.session.weekday]} ${shortDate(openStatus.date)}`} onClose={() => setOpen(undefined)}>
-                <SessionPanel key={openStatus.date} status={openStatus} adjustment={adjustmentOn(openStatus.date)} state={state} today={today} />
+                <SessionPanel key={openStatus.date} status={openStatus} adjustment={adjustmentOn(openStatus.date)} state={state} today={today} onMoved={() => setOpen(undefined)} />
               </Sheet>
             ) : null}
           </>

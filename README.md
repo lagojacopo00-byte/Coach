@@ -17,7 +17,7 @@ npm run build && npm start
 
 ## Come usarla
 
-- **Oggi**: la settimana giorno per giorno, con una **V verde** su ciò che è fatto (corse e palestra). Tocca un giorno per registrarlo (**Fatto** con km, tempo, FC, D+, sensazioni, dolore, tutto facoltativo; oppure **Non fatto** con motivo), per modificarlo o eliminarlo. Sotto: «Da fare a breve» e «Gambe pesanti o dolore?».
+- **Oggi**: la settimana giorno per giorno, con una **V verde** su ciò che è fatto (corse e palestra). **Tieni premuto un giorno e trascinalo** su un altro per scambiarli (la palestra di mercoledì a venerdì, ad esempio): vale solo per oggi e i giorni futuri, mai per giorni già fatti, e compare subito in Settimane. «Annulla» o «torna al piano» ripristinano. Tocca un giorno per registrarlo (**Fatto** con km, tempo, FC, D+, sensazioni, dolore, tutto facoltativo; oppure **Non fatto** con motivo), per modificarlo o eliminarlo. Sotto: «Da fare a breve» e «Gambe pesanti o dolore?».
 - **Settimane**: tutte le 16 settimane in una griglia (righe = settimane, colonne = lun–dom), colorate per tipo di seduta (leggenda sotto il calendario). In fondo l'andamento di carico e lungo.
 - **Palestra**: la scheda (due full body con le gambe spezzate: A il lunedì, B il mercoledì). Registri pesi e ripetizioni per serie (il carico si copia su tutte le serie; si salva da solo a ogni modifica); le serie le decide il coach (volume che cresce, scarico, tapering).
 - **Corse**: **Aggiungi corsa** (a mano o importando da Garmin/Strava), i **chilometri settimanali** con analisi, **tutte le corse** raggruppate per settimana e colorate per tipo (tocca una corsa per modificarla o eliminarla), e in fondo dati interessanti (corsa più lunga, settimana migliore, passo per tipo, FC negli easy…).

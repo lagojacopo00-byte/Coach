@@ -18,6 +18,7 @@ import {
 import { allCheckIns, type AppState } from "./state";
 import { actualWeekKm, DEFAULT_EASY_PACE, isRunSession, plannedWeekKm, weekSummary } from "./summary";
 import { easyPaceRange } from "./zones";
+import { applySwaps, type DaySwap } from "./moves";
 import type { Adjustment, Advice, CheckIn, IsoDate, Profile, Week } from "./types";
 import { dateOfWeekday, diffDays, weekForDate } from "./week";
 
@@ -47,6 +48,8 @@ export interface EffectiveWeek {
   /** Settimana con gli override applicati (il seed resta intatto). */
   week: Week;
   adjustments: Adjustment[];
+  /** Giorni spostati dall'utente in questa settimana. */
+  moves: DaySwap[];
 }
 
 /** Applica gli override deterministici R3 (stop) e R2 (qualità → easy) a una settimana. */
@@ -68,7 +71,10 @@ export function extraEasyReport(base: Week, state: AppState, today: IsoDate): Re
  * Applica gli override deterministici: R3 (stop), R2 (qualità → easy) e, se è data `today`,
  * R8 (easy facoltativa del venerdì). Senza `today` R8 non si applica.
  */
-export function effectiveWeek(base: Week, state: AppState, today?: IsoDate): EffectiveWeek {
+export function effectiveWeek(baseWeek: Week, state: AppState, today?: IsoDate): EffectiveWeek {
+  // Prima gli spostamenti dell'utente, poi le regole del coach sul piano già spostato.
+  const moves = state.swaps.filter((x) => x.weekIndex === baseWeek.index);
+  const base = moves.length > 0 ? applySwaps(baseWeek, moves) : baseWeek;
   const checkIns = allCheckIns(state);
   const checkInOn = (d: IsoDate): CheckIn | undefined => checkIns.find((c) => c.date === d);
   const stop = stopStatus(state);
@@ -127,7 +133,7 @@ export function effectiveWeek(base: Week, state: AppState, today?: IsoDate): Eff
     return session;
   });
 
-  return { week: { ...base, sessions }, adjustments };
+  return { week: { ...base, sessions }, adjustments, moves };
 }
 
 /** Km realmente fatti nell'ultima settimana normale (non di scarico) prima di `week`, con ripiego sulla base dell'onboarding. */

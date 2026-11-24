@@ -11,7 +11,7 @@ import { KIND_STYLE, LEGEND } from "./kind-style";
 import { SessionPanel } from "./session-panel";
 import { Sheet } from "./sheet";
 import { TrendChart } from "./trend-charts";
-import { Card, H2, PageTitle } from "./ui";
+import { Card, H2 } from "./ui";
 import { WeekPanel } from "./week-panel";
 import { WithCoach } from "./with-coach";
 
@@ -37,8 +37,6 @@ export function SettimaneView() {
 
         return (
           <>
-            <PageTitle>Settimane</PageTitle>
-
             <div className="sticky top-0 z-10 -mx-1 grid grid-cols-[2.4rem_repeat(7,minmax(0,1fr))] gap-[3px] bg-[var(--background)] px-1 pb-1 pt-1 text-center text-[10px] font-semibold uppercase text-zinc-500">
               <span />
               {WEEKDAYS.map((d) => <span key={d}>{WEEKDAY_SHORT[d]}</span>)}
@@ -132,6 +130,7 @@ export function SettimaneView() {
                     adjustment={selView?.effective.adjustments.find((a) => a.weekday === sel.weekday)}
                     state={state}
                     today={today}
+                    onMoved={() => setSel(undefined)}
                   />
                 ) : null}
               </Sheet>
