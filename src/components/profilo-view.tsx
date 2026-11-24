@@ -18,7 +18,7 @@ import {
   type AppState,
 } from "../domain/state";
 import { easyPaceRange, formatPace, hrZones, parsePace, thresholdPaceRange } from "../domain/zones";
-import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, inputCls, PageTitle, Section } from "./ui";
+import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, inputCls, Section } from "./ui";
 import { GarminSection } from "./garmin-card";
 import { StravaSection } from "./strava-card";
 import { TimeInput } from "./time-input";
@@ -31,7 +31,6 @@ export function ProfiloView() {
     <WithCoach>
       {({ state, today, simDate }) => (
         <>
-          <PageTitle sub="Dati, zone, test fisici e backup">Profilo</PageTitle>
           <StopSection state={state} today={today} />
           <Onboarding state={state} today={today} />
           <ExtraEasy state={state} />

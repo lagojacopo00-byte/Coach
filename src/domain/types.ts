@@ -46,6 +46,8 @@ export interface Session {
   rmKm?: number;
   /** Facoltativa: non conta come saltata se non la fai. */
   optional?: boolean;
+  /** Giorno del piano base da cui la seduta è stata spostata (se l'utente l'ha spostata). */
+  from?: Weekday;
 }
 
 export interface Week {

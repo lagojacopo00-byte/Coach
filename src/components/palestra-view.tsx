@@ -6,7 +6,8 @@ import { exerciseHistory, logVolume, workoutOn, type Workout } from "../domain/g
 import { shortDate, WEEKDAY_LABEL } from "../domain/guidance";
 import { gymPlanOf, removeGymLog, type AppState } from "../domain/state";
 import type { IsoDate } from "../domain/types";
-import { weekdayOf } from "../domain/week";
+import { effectiveWeek } from "../domain/coach";
+import { weekdayOf, weekForDate } from "../domain/week";
 import { GymEditor } from "./gym-edit";
 import { GymLogForm } from "./gym-log";
 import { IconCheck } from "./icons";
@@ -21,7 +22,10 @@ export function PalestraView() {
 
 function Content({ state, today }: { state: AppState; today: IsoDate }) {
   const plan = gymPlanOf(state);
-  const todays = workoutOn(plan, weekdayOf(today));
+  const week = weekForDate(today);
+  // L'allenamento di oggi segue gli spostamenti: se la palestra è stata spostata a oggi, vale quella.
+  const todaySession = week ? effectiveWeek(week, state, today).week.sessions.find((s) => s.weekday === weekdayOf(today)) : undefined;
+  const todays = todaySession?.kind === "gym" ? workoutOn(plan, todaySession.from ?? todaySession.weekday) : undefined;
   const [mode, setMode] = useState<Mode>({ type: "list" });
   const [date, setDate] = useState(today);
   const [saved, setSaved] = useState(false);
@@ -30,7 +34,7 @@ function Content({ state, today }: { state: AppState; today: IsoDate }) {
   if (mode.type === "edit") {
     return (
       <>
-        <PageTitle sub="Nomi, serie, ripetizioni e incrementi">Modifica scheda</PageTitle>
+        <PageTitle sub="Nomi, ripetizioni e incrementi">Modifica scheda</PageTitle>
         <GymEditor plan={plan} onDone={() => setMode({ type: "list" })} />
       </>
     );
@@ -52,7 +56,6 @@ function Content({ state, today }: { state: AppState; today: IsoDate }) {
   const logs = [...state.gymLogs].reverse().slice(0, 12);
   return (
     <>
-      <PageTitle>Palestra</PageTitle>
       {saved ? <Card tone="ok" className="mb-3 flex items-center gap-2 !p-3"><IconCheck className="h-5 w-5" /> Allenamento chiuso: è nello storico</Card> : null}
 
       <ul className="space-y-3">

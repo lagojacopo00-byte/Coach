@@ -20,7 +20,7 @@ import { plannedKindOn, RunForm } from "./run-form";
 import { Sheet } from "./sheet";
 import { useStravaStatus } from "./strava-card";
 import { TrendChart } from "./trend-charts";
-import { btnDanger, btnPrimary, btnSecondary, Card, CheckBadge, H2, PageTitle, Section } from "./ui";
+import { btnDanger, btnPrimary, btnSecondary, Card, CheckBadge, H2, Section } from "./ui";
 import { WithCoach } from "./with-coach";
 
 const km1 = (n: number) => `${n.toFixed(1).replace(".", ",")} km`;
@@ -41,8 +41,6 @@ function Content({ state, today }: { state: AppState; today: string }) {
 
   return (
     <>
-      <PageTitle>Corse</PageTitle>
-
       <AddRunBox state={state} today={today} />
 
       <H2>Chilometri settimanali</H2>

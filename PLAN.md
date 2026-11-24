@@ -59,3 +59,5 @@ Piano completo: vedi `docs/HANDOFF.md`. Un task per iterazione; spunta quando `n
 - Dopo i test fisici (soglia 3/12, mezza 14/02) i risultati si inseriscono in Profilo: ricalcolano zone/ritmi (R5) e valutano il target (R7). Eventuali modifiche al piano base vanno fatte a mano su `plan.seed.ts`.
 
 - [x] Revisione UI (24/11): Oggi con la settimana e le V verdi; Settimane con leggenda in fondo; Corse con aggiungi/km settimanali/analisi/elenco colorato/dati interessanti; Profilo a sezioni chiuse
+
+- [x] Sposta i giorni della settimana e via i titoli delle pagine
