@@ -37,13 +37,7 @@ export function SettimaneView() {
 
         return (
           <>
-            <PageTitle sub="Tocca un giorno per i dettagli e per registrarlo; tocca la settimana per il riepilogo">Settimane</PageTitle>
-
-            <ul className="mb-3 flex flex-wrap gap-1.5" aria-label="Legenda">
-              {LEGEND.map((l) => (
-                <li key={l.label} className={`rounded-md px-2 py-0.5 text-xs font-semibold ${KIND_STYLE[l.kind].cell}`}>{l.label}</li>
-              ))}
-            </ul>
+            <PageTitle>Settimane</PageTitle>
 
             <div className="sticky top-0 z-10 -mx-1 grid grid-cols-[2.4rem_repeat(7,minmax(0,1fr))] gap-[3px] bg-[var(--background)] px-1 pb-1 pt-1 text-center text-[10px] font-semibold uppercase text-zinc-500">
               <span />
@@ -111,6 +105,12 @@ export function SettimaneView() {
                 );
               })}
             </div>
+
+            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Legenda">
+              {LEGEND.map((l) => (
+                <li key={l.label} className={`rounded-md px-2 py-0.5 text-xs font-semibold ${KIND_STYLE[l.kind].cell}`}>{l.label}</li>
+              ))}
+            </ul>
 
             <H2>Andamento</H2>
             <Card className="space-y-6">

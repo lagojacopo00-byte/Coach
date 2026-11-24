@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { disconnectStrava, errorText, fetchStravaActivities, getStravaStatus, type StravaStatus } from "../data/strava-client";
 import { useGarminStatus } from "./garmin-card";
 import { applyImport } from "./import-runs";
-import { btnDanger, btnPrimary, btnSecondary, Card, H2 } from "./ui";
+import { btnDanger, btnPrimary, btnSecondary, Section } from "./ui";
 
 /** Stato di Strava per questo browser. `undefined` finché non risponde. */
 export function useStravaStatus(refreshKey = 0): StravaStatus | undefined {
@@ -35,6 +35,8 @@ export function StravaSection() {
     return r ? RESULT_TEXT[r] : undefined;
   });
   const [busy, setBusy] = useState(false);
+  // Si apre da solo quando si torna da Strava con un messaggio (?strava=…).
+  const [startOpen] = useState(() => new URLSearchParams(window.location.search).has("strava"));
   const garmin = useGarminStatus();
 
   useEffect(() => {
@@ -59,9 +61,7 @@ export function StravaSection() {
   if (garmin?.configured && status && !status.connected) return null;
 
   return (
-    <>
-      <H2>Strava (alternativa a Garmin)</H2>
-      <Card>
+    <Section title="Strava (alternativa a Garmin)" open={startOpen} hint={status?.connected ? "collegato" : undefined}>
         {!status ? (
           <p className="text-sm text-zinc-500">Controllo…</p>
         ) : !status.configured ? (
@@ -93,8 +93,7 @@ export function StravaSection() {
           </div>
         )}
         {msg ? <p role="status" className="mt-3 rounded-xl bg-zinc-100 p-3 text-sm dark:bg-zinc-800">{msg}</p> : null}
-      </Card>
-    </>
+      </Section>
   );
 }
 

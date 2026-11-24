@@ -75,3 +75,17 @@ describe("importazione", () => {
     expect(importSummary({ toAdd: [toRun(a(1, "2026-11-24"), "easy")], alreadyImported: 2, skippedSameDay: 1 })).toMatch(/Importate 1 corsa, 2 già presenti, 1 saltate/);
   });
 });
+
+import { notImported } from "./strava";
+describe("notImported", () => {
+  const act = (id: number, date: string, source: "strava" | "garmin" = "garmin") => ({ source, id, name: "n", sportType: "running", date, km: 5, durationSec: 1500 });
+  it("toglie le già importate (per sorgente) e ordina dalla più recente", () => {
+    const runs = [{ id: "garmin-1", date: "2026-11-24", kind: "easy" as const, km: 5, durationSec: 1500, pain: 0, garminId: 1 }];
+    const r = notImported(runs, [act(1, "2026-11-24"), act(2, "2026-11-26"), act(3, "2026-11-25"), act(1, "2026-11-24", "strava")]);
+    expect(r.map((a) => `${a.source}:${a.id}`)).toEqual(["garmin:2", "garmin:3", "strava:1"]);
+  });
+  it("mostra anche i giorni con una corsa scritta a mano", () => {
+    const runs = [{ id: "m", date: "2026-11-24", kind: "easy" as const, km: 5, durationSec: 1500, pain: 0 }];
+    expect(notImported(runs, [act(1, "2026-11-24")])).toHaveLength(1);
+  });
+});

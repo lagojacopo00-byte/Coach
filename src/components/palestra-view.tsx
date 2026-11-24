@@ -52,7 +52,7 @@ function Content({ state, today }: { state: AppState; today: IsoDate }) {
   const logs = [...state.gymLogs].reverse().slice(0, 12);
   return (
     <>
-      <PageTitle sub="Registra pesi e ripetizioni: la volta dopo ti dico quando salire">Palestra</PageTitle>
+      <PageTitle>Palestra</PageTitle>
       {saved ? <Card tone="ok" className="mb-3 flex items-center gap-2 !p-3"><IconCheck className="h-5 w-5" /> Allenamento chiuso: è nello storico</Card> : null}
 
       <ul className="space-y-3">

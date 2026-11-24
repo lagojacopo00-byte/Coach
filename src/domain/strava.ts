@@ -108,3 +108,13 @@ export function importSummary(p: ImportPlan): string {
   if (p.skippedSameDay > 0) parts.push(`${p.skippedSameDay} saltate perché quel giorno c'è già una corsa registrata a mano`);
   return parts.join(", ") + ".";
 }
+
+/** Le attività non ancora importate (anche in giorni dove hai una corsa a mano: qui decidi tu). */
+export function notImported(runs: readonly Run[], activities: readonly ImportedActivity[]): ImportedActivity[] {
+  const done = new Set<string>();
+  for (const r of runs) {
+    if (r.stravaId !== undefined) done.add(`strava:${r.stravaId}`);
+    if (r.garminId !== undefined) done.add(`garmin:${r.garminId}`);
+  }
+  return activities.filter((a) => !done.has(`${a.source}:${a.id}`)).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+}

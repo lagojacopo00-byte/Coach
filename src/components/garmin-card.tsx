@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchGarminActivities, garminErrorText, getGarminStatus, lockGarmin, unlockGarmin, type GarminStatus } from "../data/garmin-client";
 import { applyImport } from "./import-runs";
-import { btnPrimary, btnSecondary, Card, Field, H2, inputCls } from "./ui";
+import { btnPrimary, btnSecondary, Field, inputCls, Section } from "./ui";
 
 /** Stato di Garmin per questo browser. `undefined` finché non risponde. */
 export function useGarminStatus(refreshKey = 0): GarminStatus | undefined {
@@ -56,9 +56,7 @@ export function GarminSection() {
   }
 
   return (
-    <>
-      <H2>Garmin</H2>
-      <Card>
+    <Section title="Garmin" hint={!status ? undefined : !status.configured ? "da configurare" : status.unlocked ? "attivo" : "bloccato"}>
         {!status ? (
           <p className="text-sm text-zinc-500">Controllo…</p>
         ) : !status.configured ? (
@@ -88,7 +86,6 @@ export function GarminSection() {
           </div>
         )}
         {msg ? <p role="status" className="mt-3 rounded-xl bg-zinc-100 p-3 text-sm dark:bg-zinc-800">{msg}</p> : null}
-      </Card>
-    </>
+      </Section>
   );
 }

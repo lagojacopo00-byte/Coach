@@ -93,7 +93,6 @@ export function GymLogForm({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">Si salva da solo a ogni modifica. Scrivi il carico una volta: si copia sulle altre serie.</p>
       {weekNotes.map((n) => (
         <p key={n} className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm dark:border-sky-900 dark:bg-sky-950/40">{n}</p>
       ))}

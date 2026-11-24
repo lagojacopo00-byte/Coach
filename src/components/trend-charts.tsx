@@ -56,7 +56,7 @@ export function TrendChart({ title, unit, data, pick, currentIndex }: Props) {
       </div>
       <p className="mt-1 min-h-5 text-sm text-zinc-700 dark:text-zinc-300" aria-live="polite">
         {s
-          ? `Sett. ${s.p.index}${s.p.deload ? " (scarico)" : ""}: pianificato ${s.v.planned.toFixed(0)} ${unit}, fatto ${s.v.actual > 0 ? s.v.actual.toFixed(1) : "0"} ${unit}`
+          ? `Sett. ${s.p.index}${s.p.deload ? " (scarico)" : ""}: pianificato ${s.v.planned.toFixed(0)} ${unit}, fatto ${s.v.actual > 0 ? s.v.actual.toFixed(1).replace(".", ",") : "0"} ${unit}`
           : "Tocca una settimana per i valori"}
       </p>
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full" role="img" aria-label={`${title}, pianificato e fatto per settimana`}>
@@ -87,7 +87,7 @@ export function TrendChart({ title, unit, data, pick, currentIndex }: Props) {
           <thead><tr><th className="py-0.5">Sett.</th><th>Pianificato</th><th>Fatto</th></tr></thead>
           <tbody>
             {data.map((d, i) => (
-              <tr key={d.index}><td className="py-0.5">{d.index}{d.deload ? " (scarico)" : ""}</td><td>{values[i].planned.toFixed(0)} {unit}</td><td>{values[i].actual.toFixed(1)} {unit}</td></tr>
+              <tr key={d.index}><td className="py-0.5">{d.index}{d.deload ? " (scarico)" : ""}</td><td>{values[i].planned.toFixed(0)} {unit}</td><td>{values[i].actual.toFixed(1).replace(".", ",")} {unit}</td></tr>
             ))}
           </tbody>
         </table>

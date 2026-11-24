@@ -18,7 +18,7 @@ import {
   type AppState,
 } from "../domain/state";
 import { easyPaceRange, formatPace, hrZones, parsePace, thresholdPaceRange } from "../domain/zones";
-import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, H2, inputCls, PageTitle } from "./ui";
+import { AdviceList, btnDanger, btnPrimary, btnSecondary, Card, Field, inputCls, PageTitle, Section } from "./ui";
 import { GarminSection } from "./garmin-card";
 import { StravaSection } from "./strava-card";
 import { TimeInput } from "./time-input";
@@ -33,7 +33,7 @@ export function ProfiloView() {
         <>
           <PageTitle sub="Dati, zone, test fisici e backup">Profilo</PageTitle>
           <StopSection state={state} today={today} />
-          <Onboarding key={String(state.onboardingDone)} state={state} today={today} />
+          <Onboarding state={state} today={today} />
           <ExtraEasy state={state} />
           <GarminSection />
           <StravaSection />
@@ -107,9 +107,7 @@ function Onboarding({ state, today }: { state: AppState; today: string }) {
   }
 
   return (
-    <>
-      <H2>I tuoi dati {state.onboardingDone ? "" : "· da completare"}</H2>
-      <Card>
+    <Section title="I tuoi dati" hint={state.onboardingDone ? undefined : "da completare"}>
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save(); }}>
           <div className="grid grid-cols-3 gap-3">
             <Field label="Età"><input inputMode="numeric" className={inputCls} value={age} onChange={(e) => setAge(e.target.value)} /></Field>
@@ -134,8 +132,7 @@ function Onboarding({ state, today }: { state: AppState; today: string }) {
           <button type="submit" className={`${btnPrimary} w-full`}>Salva</button>
           {saved ? <p className="text-center text-sm text-emerald-700 dark:text-emerald-300">Salvato.</p> : null}
         </form>
-      </Card>
-    </>
+      </Section>
   );
 }
 
@@ -143,19 +140,14 @@ function Zones({ state }: { state: AppState }) {
   const p = state.profile;
   if (!p.lthr || !p.thresholdPaceSecPerKm) {
     return (
-      <>
-        <H2>Zone e ritmi</H2>
-        <Card tone="info"><p className="text-sm">Dopo il test soglia (gio 3 dicembre) inserisci i risultati qui sotto: l&apos;app calcola zone FC e ritmi. Fino ad allora si corre a sensazione (talk test).</p></Card>
-      </>
+      <Section title="Zone e ritmi"><p className="text-sm">Dopo il test soglia (gio 3 dicembre) inserisci i risultati qui sotto: l&apos;app calcola zone FC e ritmi. Fino ad allora si corre a sensazione (talk test).</p></Section>
     );
   }
   const z = hrZones(p.lthr);
   const e = easyPaceRange(p.thresholdPaceSecPerKm);
   const t = thresholdPaceRange(p.thresholdPaceSecPerKm);
   return (
-    <>
-      <H2>Zone e ritmi · LTHR {p.lthr}</H2>
-      <Card>
+    <Section title="Zone e ritmi" hint={`LTHR ${p.lthr}`}>
         <table className="w-full text-sm">
           <tbody>
             {z.map((x) => (
@@ -168,8 +160,7 @@ function Zones({ state }: { state: AppState }) {
         </table>
         <p className="mt-3 text-sm">Easy: <b>{formatPace(e.fast)}–{formatPace(e.slow)}</b>/km · Soglia: <b>{formatPace(t.fast)}–{formatPace(t.slow)}</b>/km · RM: <b>5:40</b>/km</p>
         <p className="mt-2 text-xs text-zinc-500">Imposta la stessa LTHR sul Garmin per avere le zone giuste sull&apos;orologio. I ritmi sono indicazioni: il talk test resta il criterio per l&apos;easy.</p>
-      </Card>
-    </>
+      </Section>
   );
 }
 
@@ -199,9 +190,7 @@ function ThresholdTest({ state, today }: { state: AppState; today: string }) {
   }
 
   return (
-    <>
-      <H2>Test soglia 30&apos; · ricalcolo ritmi</H2>
-      <Card>
+    <Section title="Test soglia 30&apos; · ricalcolo ritmi">
         <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">Riposo da 48h, in piano, 15&apos; di riscaldamento e 30&apos; al massimo sostenibile costante. Inserisci FC e passo medi degli <b>ultimi 20&apos;</b>.</p>
         <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save(); }}>
           <Field label="Data"><input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
@@ -218,8 +207,7 @@ function ThresholdTest({ state, today }: { state: AppState; today: string }) {
             {state.thresholdTests.map((t) => <li key={t.date}>{shortDate(t.date)}: {t.last20AvgHr} bpm · {formatPace(t.last20PaceSecPerKm)}/km</li>)}
           </ul>
         ) : null}
-      </Card>
-    </>
+      </Section>
   );
 }
 
@@ -228,9 +216,7 @@ function HalfTest({ state, today }: { state: AppState; today: string }) {
   const [error, setError] = useState<string>();
   const advice = state.halfResult ? halfAdvice(state.halfResult.timeSec) : undefined;
   return (
-    <>
-      <H2>Mezza di prova · 14 febbraio</H2>
-      <Card>
+    <Section title="Mezza di prova · 14 febbraio">
         <form className="space-y-3" onSubmit={(e) => {
           e.preventDefault();
           const sec = parseDuration(time);
@@ -243,8 +229,7 @@ function HalfTest({ state, today }: { state: AppState; today: string }) {
           <button type="submit" className={`${btnSecondary} w-full`}>Valuta il checkpoint</button>
         </form>
         {advice ? <div className="mt-3"><AdviceList advices={[advice]} /></div> : null}
-      </Card>
-    </>
+      </Section>
   );
 }
 
@@ -252,9 +237,7 @@ function Backup({ state }: { state: AppState }) {
   const [text, setText] = useState("");
   const [msg, setMsg] = useState<string>();
   return (
-    <>
-      <H2>Backup</H2>
-      <Card>
+    <Section title="Backup">
         <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">I dati sono salvati su questo dispositivo. Esporta un backup ogni tanto (e prima di cambiare telefono o cancellare i dati di Safari).</p>
         <div className="grid grid-cols-2 gap-2">
           <button type="button" className={btnSecondary} onClick={async () => {
@@ -277,17 +260,14 @@ function Backup({ state }: { state: AppState }) {
           if (window.confirm("Sostituire i dati attuali con il backup?")) { replaceState(r.state); setMsg("Backup ripristinato."); setText(""); }
         }}>Ripristina</button>
         {msg ? <p className="mt-2 text-sm">{msg}</p> : null}
-      </Card>
-    </>
+      </Section>
   );
 }
 
 function Tools({ simDate, today }: { simDate?: string; today: string }) {
   const [d, setD] = useState(simDate ?? today);
   return (
-    <>
-      <H2>Strumenti</H2>
-      <Card>
+    <Section title="Strumenti">
         <p className="mb-2 text-sm font-medium">Simula la data (per provare l&apos;app in un&apos;altra settimana)</p>
         <div className="flex gap-2">
           <input type="date" className={inputCls} value={d} onChange={(e) => setD(e.target.value)} />
@@ -297,17 +277,14 @@ function Tools({ simDate, today }: { simDate?: string; today: string }) {
         <button type="button" className={`${btnDanger} mt-4 w-full`} onClick={() => {
           if (window.confirm("Cancellare TUTTI i dati (corse, check-in, test, checklist)? Fai prima un backup.")) { replaceState(initialState()); setSimDate(undefined); }
         }}>Cancella tutti i dati</button>
-      </Card>
-    </>
+      </Section>
   );
 }
 
 function ExtraEasy({ state }: { state: AppState }) {
   const on = state.extraEasyOff !== true;
   return (
-    <>
-      <H2>Easy facoltativa del venerdì</H2>
-      <Card>
+    <Section title="Easy facoltativa del venerdì" hint={on ? "attiva" : "disattivata"}>
         <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-0.5 h-6 w-6 shrink-0" checked={on} onChange={() => updateState((s) => ({ ...s, extraEasyOff: on ? true : undefined }))} />
           <span>
@@ -317,7 +294,6 @@ function ExtraEasy({ state }: { state: AppState }) {
             </span>
           </span>
         </label>
-      </Card>
-    </>
+      </Section>
   );
 }

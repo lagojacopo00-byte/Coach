@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Advice } from "../domain/types";
-import { IconAlert, IconInfo, IconStop } from "./icons";
+import { IconAlert, IconCheck, IconChevron, IconInfo, IconStop } from "./icons";
 
 type Tone = "default" | "ok" | "warn" | "stop" | "info" | "accent";
 
@@ -104,4 +104,40 @@ export function AdviceList({ advices }: { advices: Advice[] }) {
 
 export function Loading() {
   return <p className="py-16 text-center text-zinc-500">Carico…</p>;
+}
+
+/** Sezione richiudibile: chiusa di base, si apre toccando il titolo. */
+export function Section({
+  title,
+  hint,
+  open = false,
+  children,
+}: {
+  title: ReactNode;
+  /** Piccola nota a destra del titolo (es. "da completare"). */
+  hint?: ReactNode;
+  open?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details open={open} className="group mt-3 rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <span className="font-semibold">{title}</span>
+        <span className="flex items-center gap-2 text-sm text-zinc-500">
+          {hint}
+          <IconChevron className="h-4 w-4 transition-transform group-open:rotate-90" />
+        </span>
+      </summary>
+      <div className="px-4 pb-4">{children}</div>
+    </details>
+  );
+}
+
+/** V verde: fatto. */
+export function CheckBadge({ label = "Fatto" }: { label?: string }) {
+  return (
+    <span role="img" aria-label={label} className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white">
+      <IconCheck className="h-4 w-4" />
+    </span>
+  );
 }
