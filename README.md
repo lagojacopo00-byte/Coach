@@ -31,7 +31,7 @@ Il Garmin sincronizza le corse su Strava; l'app le importa da lì (km, tempo, FC
 
 Configurazione (una volta sola):
 1. Su strava.com/settings/api crea un'app. Come «Authorization Callback Domain» metti il dominio del sito (es. `coach-beta.vercel.app`, senza `https://`).
-2. Su Vercel, nel progetto: Settings → Environment Variables. Aggiungi `STRAVA_CLIENT_ID` e `STRAVA_CLIENT_SECRET` con i valori di Strava (Production). La chiave segreta resta sul server, mai sul telefono.
+2. Su Vercel, nel progetto: Settings → Environment Variables (il modello dei nomi è in `.env.example`; per provare sul computer lo copi in `.env.local`, che non va mai su GitHub). Aggiungi `STRAVA_CLIENT_ID` e `STRAVA_CLIENT_SECRET` con i valori di Strava (Production). La chiave segreta resta sul server, mai sul telefono.
 3. Redeploy (Deployments → Redeploy).
 4. In Profilo → Strava e Garmin: **Collega Strava**. Poi **Importa da Strava** nella seduta del giorno, oppure **Importa le corse degli ultimi 30 giorni** dal Profilo.
 
