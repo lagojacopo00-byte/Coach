@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { disconnectStrava, errorText, fetchStravaActivities, getStravaStatus, type StravaStatus } from "../data/strava-client";
-import { updateState } from "../data/store";
-import { importSummary, planImport } from "../domain/strava";
-import { addRun } from "../domain/state";
-import { plannedRunKindOn } from "./run-form";
+import { useGarminStatus } from "./garmin-card";
+import { applyImport } from "./import-runs";
 import { btnDanger, btnPrimary, btnSecondary, Card, H2 } from "./ui";
 
 /** Stato di Strava per questo browser. `undefined` finché non risponde. */
@@ -37,6 +35,7 @@ export function StravaSection() {
     return r ? RESULT_TEXT[r] : undefined;
   });
   const [busy, setBusy] = useState(false);
+  const garmin = useGarminStatus();
 
   useEffect(() => {
     // Tolgo ?strava=… dall'indirizzo: il messaggio resta, il parametro no.
@@ -51,20 +50,17 @@ export function StravaSection() {
       setMsg(errorText(r.error));
       if (r.error === "not_connected") setRefresh((n) => n + 1);
     } else {
-      let summary = "";
-      updateState((s) => {
-        const plan = planImport(s.runs, r.activities, (a) => plannedRunKindOn(a.date) ?? (a.sportType === "TrailRun" ? "trail" : "easy"));
-        summary = importSummary(plan);
-        return plan.toAdd.reduce(addRun, s);
-      });
-      setMsg(summary);
+      setMsg(applyImport(r.activities));
     }
     setBusy(false);
   }
 
+  // Se Garmin è configurato e Strava no, non serve mostrare anche le istruzioni di Strava.
+  if (garmin?.configured && status && !status.connected) return null;
+
   return (
     <>
-      <H2>Strava e Garmin</H2>
+      <H2>Strava (alternativa a Garmin)</H2>
       <Card>
         {!status ? (
           <p className="text-sm text-zinc-500">Controllo…</p>

@@ -85,6 +85,8 @@ export interface Run {
   notes?: string;
   /** Id dell'attività su Strava, se la corsa è stata importata (evita i doppioni). */
   stravaId?: number;
+  /** Id dell'attività su Garmin Connect, se la corsa è stata importata da lì. */
+  garminId?: number;
 }
 
 export interface Profile {

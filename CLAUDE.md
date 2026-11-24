@@ -14,7 +14,7 @@ Next.js (App Router) + TypeScript + Tailwind, Vitest per la logica, Supabase (da
 - `src/data/`: repository Supabase. `src/app/`: UI mobile-first.
 
 ## Comandi
-- `npm run check` = lint + typecheck + test + build. Deve essere verde prima di ogni commit.
+- `npm run check` = lint + typecheck + test + build + controllo che le route `/api` siano dinamiche (una route che legge env o cookie ma finisce statica resta congelata ai valori della build: leggi sempre prima la richiesta). Deve essere verde prima di ogni commit.
 
 ## Regole del loop
 1. Una iterazione = un solo task, il primo non spuntato di `PLAN.md`.

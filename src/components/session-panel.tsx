@@ -14,8 +14,11 @@ import { SKIP_REASONS, type Adjustment, type IsoDate, type SkipReason, type Week
 import { IconCheck, IconX } from "./icons";
 import { KIND_STYLE } from "./kind-style";
 import { RunForm } from "./run-form";
+import { fetchGarminActivities, garminErrorText } from "../data/garmin-client";
 import { fetchStravaActivities, errorText } from "../data/strava-client";
-import { activitiesOn, type StravaActivity } from "../domain/strava";
+import { activitiesOn, type ImportedActivity } from "../domain/strava";
+import { addDays } from "../domain/week";
+import { useGarminStatus } from "./garmin-card";
 import { useStravaStatus } from "./strava-card";
 import { btnDanger, btnPrimary, btnSecondary } from "./ui";
 
@@ -41,7 +44,7 @@ export function SessionPanel({
 }) {
   const { session, date, run, skip } = status;
   const [mode, setMode] = useState<"idle" | "done" | "skip">("idle");
-  const [prefill, setPrefill] = useState<StravaActivity | undefined>();
+  const [prefill, setPrefill] = useState<ImportedActivity | undefined>();
   const style = KIND_STYLE[session.kind];
   const brief = sessionBrief(session);
   const hint = paceHint(session, state.profile);
@@ -133,7 +136,7 @@ export function SessionPanel({
         <p className="mt-4 text-sm text-zinc-500">Potrai registrarla {date === today ? "oggi" : `da ${shortDate(date)}`}.</p>
       )}
 
-      {isRun && mode === "idle" && canLog && !run ? <StravaImport date={date} onPick={(a) => { setPrefill(a); setMode("done"); }} /> : null}
+      {isRun && mode === "idle" && canLog && !run ? <ActivityImport date={date} onPick={(a) => { setPrefill(a); setMode("done"); }} /> : null}
     </div>
   );
 }
@@ -200,24 +203,33 @@ function GymBlock({ state, date, weekday }: { state: AppState; date: IsoDate; we
   );
 }
 
-/** "Importa da Strava": cerca le corse di quel giorno e precompila il form. Compare solo se Strava è collegato. */
-function StravaImport({ date, onPick }: { date: IsoDate; onPick: (a: StravaActivity) => void }) {
-  const status = useStravaStatus();
+/** "Importa da Garmin/Strava": cerca le corse di quel giorno e precompila il form. Compare solo se una sorgente è attiva. */
+function ActivityImport({ date, onPick }: { date: IsoDate; onPick: (a: ImportedActivity) => void }) {
+  const garmin = useGarminStatus();
+  const strava = useStravaStatus();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | undefined>();
-  const [choices, setChoices] = useState<StravaActivity[]>([]);
-  if (!status?.connected) return null;
+  const [choices, setChoices] = useState<ImportedActivity[]>([]);
+  const source = garmin?.unlocked ? "garmin" : strava?.connected ? "strava" : undefined;
+  if (!source) {
+    return garmin?.configured ? (
+      <p className="mt-3 text-sm text-zinc-500">Per importare dal Garmin, sblocca prima l&apos;import dal Profilo.</p>
+    ) : null;
+  }
+  const label = source === "garmin" ? "Garmin" : "Strava";
 
   async function load() {
     setBusy(true);
     setMsg(undefined);
-    // Un giorno di margine: Strava ragiona in UTC, le attività le filtro per data locale.
-    const after = Date.parse(`${date}T00:00:00Z`) / 1000 - 86_400;
-    const r = await fetchStravaActivities(after);
+    // Un giorno di margine per parte: i fusi orari di Garmin/Strava non coincidono con i tuoi; filtro per data locale.
+    const r =
+      source === "garmin"
+        ? await fetchGarminActivities(addDays(date, -1), addDays(date, 1))
+        : await fetchStravaActivities(Date.parse(`${date}T00:00:00Z`) / 1000 - 86_400);
     setBusy(false);
-    if (!r.ok) return setMsg(errorText(r.error));
+    if (!r.ok) return setMsg(source === "garmin" ? garminErrorText(r.error as never) : errorText(r.error as never));
     const found = activitiesOn(r.activities, date);
-    if (found.length === 0) return setMsg(`Nessuna corsa su Strava il ${shortDate(date)}. Il Garmin deve aver finito di sincronizzare.`);
+    if (found.length === 0) return setMsg(`Nessuna corsa su ${label} il ${shortDate(date)}. L'orologio deve aver finito di sincronizzare.`);
     if (found.length === 1) return onPick(found[0]);
     setChoices(found);
   }
@@ -225,7 +237,7 @@ function StravaImport({ date, onPick }: { date: IsoDate; onPick: (a: StravaActiv
   return (
     <div className="mt-3">
       <button type="button" className={`${btnSecondary} w-full`} disabled={busy} onClick={load}>
-        {busy ? "Cerco su Strava…" : "Importa da Strava"}
+        {busy ? `Cerco su ${label}…` : `Importa da ${label}`}
       </button>
       {choices.length > 0 ? (
         <ul className="mt-2 space-y-2">
