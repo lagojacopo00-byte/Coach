@@ -71,7 +71,7 @@ export function defaultGymPlan(): Workout[] {
       weekday: "lun",
       focus: "Squat, trazione verticale (chin-up), panca",
       exercises: [
-        ex({ id: "squat", name: "Squat", sets: 3, repMin: 5, repMax: 6, incrementKg: 5, group: "gambe", note: "Fermati con 2 ripetizioni di riserva." }),
+        ex({ id: "squat", name: "Squat", sets: 3, repMin: 3, repMax: 5, incrementKg: 5, group: "gambe", note: "Fermati con 2 ripetizioni di riserva." }),
         ex({ id: "chin-up", name: "Chin-up zavorrati", sets: 5, repMin: 5, repMax: 8, incrementKg: 2.5, group: "forza", note: "Il peso è la zavorra aggiunta." }),
         ex({ id: "panca", name: "Panca piana", sets: 3, repMin: 6, repMax: 8, incrementKg: 2.5, group: "forza", extraSetFromWeeks: [5] }),
         ex({ id: "alzate-a", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza", extraSetFromWeeks: [5, 10] }),
@@ -86,7 +86,7 @@ export function defaultGymPlan(): Workout[] {
       focus: "Military press, stacco a gambe tese, bulgari, tirata orizzontale",
       exercises: [
         ex({ id: "military", name: "Military press", sets: 4, repMin: 5, repMax: 8, incrementKg: 2.5, group: "forza" }),
-        ex({ id: "rdl", name: "Stacco a gambe tese", sets: 3, repMin: 6, repMax: 8, incrementKg: 5, group: "gambe" }),
+        ex({ id: "rdl", name: "Stacco a gambe tese", sets: 3, repMin: 4, repMax: 6, incrementKg: 5, group: "gambe" }),
         ex({ id: "bulgari", name: "Affondi bulgari", sets: 3, repMin: 8, repMax: 10, incrementKg: 2, group: "gambe", note: "Per gamba; il peso è il carico totale." }),
         ex({ id: "tirata", name: "Tirata orizzontale", sets: 3, repMin: 8, repMax: 10, incrementKg: 2.5, group: "forza", extraSetFromWeeks: [5] }),
         ex({ id: "alzate-b", name: "Alzate laterali", sets: 3, repMin: 12, repMax: 15, incrementKg: 1, group: "forza", extraSetFromWeeks: [5, 10] }),
